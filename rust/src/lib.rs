@@ -1,7 +1,7 @@
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::sync::{Arc, Mutex};
-use serde_json::json;
+use lazy_static::lazy_static;
 
 // Client state
 struct ClientState {
@@ -9,7 +9,7 @@ struct ClientState {
     token: Option<String>,
 }
 
-lazy_static::lazy_static! {
+lazy_static! {
     static ref CLIENT: Arc<Mutex<Option<ClientState>>> = Arc::new(Mutex::new(None));
 }
 
