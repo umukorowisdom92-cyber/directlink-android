@@ -25,17 +25,17 @@ public class MainActivity extends AppCompatActivity {
         statusText = findViewById(R.id.statusText);
         contactsText = findViewById(R.id.contactsText);
 
+        // Show library status
+        if (DirectLinkClient.isLibraryLoaded()) {
+            statusText.setText("✅ Rust library loaded");
+        } else {
+            statusText.setText("❌ Rust library NOT loaded");
+        }
+
         // Load saved server URL
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         String savedUrl = prefs.getString("server_url", "http://10.0.0.2:3030");
         serverUrlInput.setText(savedUrl);
-
-        statusText.setText("Status: Ready");
-
-        // Auto-connect
-        if (!savedUrl.isEmpty()) {
-            connectToServer(savedUrl);
-        }
 
         connectButton.setOnClickListener(v -> {
             String serverUrl = serverUrlInput.getText().toString();
@@ -50,28 +50,39 @@ public class MainActivity extends AppCompatActivity {
 
             connectToServer(serverUrl);
         });
+
+        // Auto-connect if we have a saved URL
+        if (!savedUrl.isEmpty()) {
+            connectToServer(savedUrl);
+        }
     }
 
     private void connectToServer(String serverUrl) {
         try {
             statusText.setText("⏳ Connecting to: " + serverUrl);
             
-            // Try to initialize
             DirectLinkClient.init(serverUrl);
+            
+            if (!DirectLinkClient.isLibraryLoaded()) {
+                statusText.setText("❌ Rust library not available");
+                Toast.makeText(this, "Rust library not available", Toast.LENGTH_LONG).show();
+                contactsText.setText("⚠️ Rust library not loaded. Please reinstall.");
+                return;
+            }
+            
             statusText.setText("✅ Connected to: " + serverUrl);
             Toast.makeText(this, "Connected!", Toast.LENGTH_SHORT).show();
 
-            // Try to get contacts (with try-catch to prevent crash)
             try {
                 String result = DirectLinkClient.getContacts();
                 contactsText.setText("📋 Contacts: " + result);
             } catch (Exception e) {
-                contactsText.setText("❌ Contacts error: " + e.getMessage());
+                contactsText.setText("❌ Error: " + e.getMessage());
             }
             
         } catch (Exception e) {
             statusText.setText("❌ Error: " + e.getMessage());
-            Toast.makeText(this, "Connection failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 }
