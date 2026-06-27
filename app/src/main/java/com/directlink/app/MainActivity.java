@@ -1,10 +1,13 @@
 package com.directlink.app;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -31,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
     private List<ChatItem> chatList = new ArrayList<>();
     private FloatingActionButton fabAddUser;
 
-    // Bottom navigation
     private LinearLayout navChats, navContacts, navCalls, navSettings;
 
     @Override
@@ -39,7 +41,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Find views
         searchInput = findViewById(R.id.searchInput);
         serverUrlInput = findViewById(R.id.serverUrlInput);
         connectButton = findViewById(R.id.connectButton);
@@ -47,54 +48,43 @@ public class MainActivity extends AppCompatActivity {
         chatsRecyclerView = findViewById(R.id.chatsRecyclerView);
         fabAddUser = findViewById(R.id.fabAddUser);
 
-        // Bottom navigation
         navChats = findViewById(R.id.navChats);
         navContacts = findViewById(R.id.navContacts);
         navCalls = findViewById(R.id.navCalls);
         navSettings = findViewById(R.id.navSettings);
 
-        // Setup RecyclerView
         chatAdapter = new ChatAdapter(chatList);
         chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         chatsRecyclerView.setAdapter(chatAdapter);
 
-        // Load saved preferences
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         String savedUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
         serverUrlInput.setText(savedUrl);
 
-        // Load sample chats
         loadSampleChats();
 
-        // Bottom navigation click listeners
-        navChats.setOnClickListener(v -> {
-            Toast.makeText(this, "💬 Chats", Toast.LENGTH_SHORT).show();
-            highlightNav(navChats);
-        });
-
-        navContacts.setOnClickListener(v -> {
-            Toast.makeText(this, "👥 Contacts", Toast.LENGTH_SHORT).show();
-            highlightNav(navContacts);
-        });
-
-        navCalls.setOnClickListener(v -> {
-            Toast.makeText(this, "📞 Calls", Toast.LENGTH_SHORT).show();
-            highlightNav(navCalls);
-        });
+        navChats.setOnClickListener(v -> highlightNav(navChats));
+        navContacts.setOnClickListener(v -> highlightNav(navContacts));
+        navCalls.setOnClickListener(v -> highlightNav(navCalls));
 
         navSettings.setOnClickListener(v -> {
-            // Open settings - show logout option
-            Toast.makeText(this, "⚙️ Settings - Logout option here", Toast.LENGTH_SHORT).show();
-            // You can add a dialog or new activity for settings
-            showSettingsDialog();
+            new AlertDialog.Builder(this)
+                .setTitle("⚙️ Settings")
+                .setMessage("Logout from your account?")
+                .setPositiveButton("Logout", (dialog, which) -> {
+                    SharedPreferences.Editor editor = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE).edit();
+                    editor.remove("auth_token");
+                    editor.remove("username");
+                    editor.apply();
+                    startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                    finish();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
         });
 
-        // FAB: Add new user
-        fabAddUser.setOnClickListener(v -> {
-            showAddUserDialog();
-        });
+        fabAddUser.setOnClickListener(v -> showAddUserDialog());
 
-        // Connect button
         connectButton.setOnClickListener(v -> {
             String serverUrl = serverUrlInput.getText().toString().trim();
             if (serverUrl.isEmpty()) {
@@ -130,19 +120,14 @@ public class MainActivity extends AppCompatActivity {
             }).start();
         });
 
-        // Search functionality
-        searchInput.addTextChangedListener(new android.text.TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 filterChats(s.toString());
             }
-            @Override
-            public void afterTextChanged(android.text.Editable s) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Auto-connect
         if (!savedUrl.isEmpty()) {
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if (!savedUrl.isEmpty()) {
@@ -151,18 +136,15 @@ public class MainActivity extends AppCompatActivity {
             }, 500);
         }
 
-        // Highlight default nav
         highlightNav(navChats);
     }
 
     private void highlightNav(LinearLayout selected) {
-        // Reset all
         resetNav(navChats);
         resetNav(navContacts);
         resetNav(navCalls);
         resetNav(navSettings);
 
-        // Highlight selected
         TextView label = (TextView) selected.getChildAt(1);
         if (label != null) {
             label.setTextColor(0xFF3F51B5);
@@ -178,53 +160,102 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showSettingsDialog() {
-        new android.app.AlertDialog.Builder(this)
-            .setTitle("⚙️ Settings")
-            .setMessage("Logout from your account?")
-            .setPositiveButton("Logout", (dialog, which) -> {
-                SharedPreferences.Editor editor = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE).edit();
-                editor.remove("auth_token");
-                editor.remove("username");
-                editor.apply();
-                startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                finish();
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
-    }
-
     private void showAddUserDialog() {
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("➕ Add New User");
 
-        // Create input fields
-        final EditText usernameInput = new EditText(this);
-        usernameInput.setHint("Username");
-        final EditText phoneInput = new EditText(this);
-        phoneInput.setHint("Phone Number (e.g., +1234567890)");
-
-        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
-        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        // Create layout with options
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 20, 40, 20);
-        layout.addView(usernameInput);
+
+        // QR Code option
+        Button qrButton = new Button(this);
+        qrButton.setText("📷 Scan QR Code");
+        qrButton.setBackgroundColor(0xFF3F51B5);
+        qrButton.setTextColor(0xFFFFFFFF);
+        qrButton.setPadding(20, 20, 20, 20);
+        qrButton.setOnClickListener(v -> {
+            Toast.makeText(this, "📷 QR Code Scanner (Coming soon)", Toast.LENGTH_SHORT).show();
+        });
+        layout.addView(qrButton);
+
+        // Divider
+        TextView divider = new TextView(this);
+        divider.setText("────────── OR ──────────");
+        divider.setGravity(android.view.Gravity.CENTER);
+        divider.setPadding(0, 20, 0, 20);
+        layout.addView(divider);
+
+        // Phone number input
+        final EditText phoneInput = new EditText(this);
+        phoneInput.setHint("📞 Enter phone number");
+        phoneInput.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
+        phoneInput.setPadding(20, 20, 20, 20);
         layout.addView(phoneInput);
+
         builder.setView(layout);
 
         builder.setPositiveButton("Add", (dialog, which) -> {
-            String username = usernameInput.getText().toString().trim();
             String phone = phoneInput.getText().toString().trim();
-            if (!username.isEmpty() && !phone.isEmpty()) {
-                // Send friend request or add contact
-                Toast.makeText(this, "Friend request sent to " + username, Toast.LENGTH_SHORT).show();
-                chatList.add(new ChatItem(username, "Friend request sent", "Now", 0, false));
-                chatAdapter.notifyDataSetChanged();
-            } else {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            if (phone.isEmpty()) {
+                Toast.makeText(this, "Please enter a phone number", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            // Check if user exists
+            checkUserAndShowProfile(phone);
         });
+
         builder.setNegativeButton("Cancel", null);
         builder.show();
+    }
+
+    private void checkUserAndShowProfile(String phone) {
+        Toast.makeText(this, "🔍 Checking user...", Toast.LENGTH_SHORT).show();
+
+        new Thread(() -> {
+            try {
+                SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
+                String serverUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
+                DirectLinkClient.init(serverUrl);
+                String result = DirectLinkClient.checkUser(phone);
+                JSONObject json = new JSONObject(result);
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    try {
+                        if (json.has("on_directlink") && json.getBoolean("on_directlink")) {
+                            String username = json.getString("username");
+                            String phoneNumber = json.getString("phone_number");
+                            boolean online = json.optBoolean("online", false);
+
+                            // Show user profile
+                            Intent intent = new Intent(MainActivity.this, UserProfileActivity.class);
+                            intent.putExtra("username", username);
+                            intent.putExtra("phone", phoneNumber);
+                            intent.putExtra("online", online);
+                            startActivity(intent);
+                        } else {
+                            // User not found
+                            new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("❌ User Not Found")
+                                .setMessage("No user found with phone number: " + phone + "\n\nWould you like to invite them to join DirectLink?")
+                                .setPositiveButton("Invite", (dialog, which) -> {
+                                    Toast.makeText(MainActivity.this, "📤 Invitation sent!", Toast.LENGTH_SHORT).show();
+                                })
+                                .setNegativeButton("Cancel", null)
+                                .show();
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+            } catch (Exception e) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        }).start();
     }
 
     private void loadSampleChats() {
@@ -263,7 +294,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void filterChats(String query) {
-        // Simple filter - you can implement proper search later
         if (query.isEmpty()) {
             loadSampleChats();
         } else {

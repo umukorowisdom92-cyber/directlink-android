@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -31,6 +32,11 @@
             android:name=".MainActivity"
             android:exported="false"
             android:label="DirectLink" />
+
+        <activity
+            android:name=".UserProfileActivity"
+            android:exported="false"
+            android:label="User Profile" />
 
     </application>
 </manifest>
