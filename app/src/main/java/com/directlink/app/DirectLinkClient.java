@@ -10,7 +10,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class DirectLinkClient {
-    private static String serverUrl = "http://10.72.80.143:3030";
+    // Cloudflare Tunnel URL
+    private static String serverUrl = "https://movement-gnu-reaching-rail.trycloudflare.com";
     private static String authToken = null;
     private static String username = null;
 
