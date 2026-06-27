@@ -24,6 +24,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Find views
         phoneInput = findViewById(R.id.loginPhone);
         passwordInput = findViewById(R.id.loginPassword);
         loginButton = findViewById(R.id.loginButton);
@@ -34,17 +35,19 @@ public class LoginActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         String serverUrl = prefs.getString("server_url", "http://10.0.0.2:3030");
 
+        // Go to register
         goToRegister.setOnClickListener(v -> {
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
             finish();
         });
 
+        // Login button
         loginButton.setOnClickListener(v -> {
             String phone = phoneInput.getText().toString().trim();
             String password = passwordInput.getText().toString().trim();
 
             if (phone.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -54,38 +57,37 @@ public class LoginActivity extends AppCompatActivity {
             new Thread(() -> {
                 try {
                     DirectLinkClient.init(serverUrl);
-                    
                     String result = DirectLinkClient.login(phone, password);
                     JSONObject json = new JSONObject(result);
-                    
+
                     new Handler(Looper.getMainLooper()).post(() -> {
                         if (json.has("token")) {
                             statusText.setText("✅ Login successful!");
-                            
+
                             // Save user info
                             SharedPreferences.Editor editor = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE).edit();
                             editor.putString("auth_token", json.getString("token"));
                             editor.putString("username", json.getString("username"));
                             editor.apply();
-                            
-                            Toast.makeText(this, "Welcome " + json.getString("username") + "!", Toast.LENGTH_LONG).show();
-                            
+
+                            Toast.makeText(LoginActivity.this, "Welcome " + json.getString("username") + "!", Toast.LENGTH_LONG).show();
+
                             // Go to main activity
                             startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
                         } else if (json.has("error")) {
                             statusText.setText("❌ " + json.getString("error"));
-                            Toast.makeText(this, "Error: " + json.getString("error"), Toast.LENGTH_LONG).show();
+                            Toast.makeText(LoginActivity.this, "Error: " + json.getString("error"), Toast.LENGTH_LONG).show();
                         } else {
                             statusText.setText("❌ Login failed");
-                            Toast.makeText(this, "Login failed", Toast.LENGTH_LONG).show();
+                            Toast.makeText(LoginActivity.this, "Login failed", Toast.LENGTH_LONG).show();
                         }
                         loginButton.setEnabled(true);
                     });
                 } catch (Exception e) {
                     new Handler(Looper.getMainLooper()).post(() -> {
                         statusText.setText("❌ Error: " + e.getMessage());
-                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         loginButton.setEnabled(true);
                     });
                 }

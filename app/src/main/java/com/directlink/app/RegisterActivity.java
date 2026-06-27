@@ -1,10 +1,10 @@
 package com.directlink.app;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -24,6 +24,7 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        // Find views
         usernameInput = findViewById(R.id.registerUsername);
         phoneInput = findViewById(R.id.registerPhone);
         passwordInput = findViewById(R.id.registerPassword);
@@ -31,9 +32,9 @@ public class RegisterActivity extends AppCompatActivity {
         statusText = findViewById(R.id.registerStatus);
         goToLogin = findViewById(R.id.goToLogin);
 
-        // Set default server URL (shared preference)
-        String serverUrl = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE)
-            .getString("server_url", "http://10.0.0.2:3030");
+        // Get server URL from SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
+        String serverUrl = prefs.getString("server_url", "http://10.0.0.2:3030");
 
         // Go to login
         goToLogin.setOnClickListener(v -> {
@@ -41,18 +42,19 @@ public class RegisterActivity extends AppCompatActivity {
             finish();
         });
 
+        // Register button
         registerButton.setOnClickListener(v -> {
             String username = usernameInput.getText().toString().trim();
             String phone = phoneInput.getText().toString().trim();
             String password = passwordInput.getText().toString().trim();
 
             if (username.isEmpty() || phone.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(RegisterActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (password.length() < 6) {
-                Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+                Toast.makeText(RegisterActivity.this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -61,33 +63,31 @@ public class RegisterActivity extends AppCompatActivity {
 
             new Thread(() -> {
                 try {
-                    // Initialize client with server URL
                     DirectLinkClient.init(serverUrl);
-                    
                     String result = DirectLinkClient.register(username, phone, password);
                     JSONObject json = new JSONObject(result);
-                    
+
                     new Handler(Looper.getMainLooper()).post(() -> {
                         if (json.has("token")) {
                             statusText.setText("✅ Registration successful!");
-                            Toast.makeText(this, "Account created! Please login.", Toast.LENGTH_LONG).show();
-                            
+                            Toast.makeText(RegisterActivity.this, "Account created! Please login.", Toast.LENGTH_LONG).show();
+
                             // Go to login
                             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
                             finish();
                         } else if (json.has("error")) {
                             statusText.setText("❌ " + json.getString("error"));
-                            Toast.makeText(this, "Error: " + json.getString("error"), Toast.LENGTH_LONG).show();
+                            Toast.makeText(RegisterActivity.this, "Error: " + json.getString("error"), Toast.LENGTH_LONG).show();
                         } else {
                             statusText.setText("❌ Registration failed");
-                            Toast.makeText(this, "Registration failed", Toast.LENGTH_LONG).show();
+                            Toast.makeText(RegisterActivity.this, "Registration failed", Toast.LENGTH_LONG).show();
                         }
                         registerButton.setEnabled(true);
                     });
                 } catch (Exception e) {
                     new Handler(Looper.getMainLooper()).post(() -> {
                         statusText.setText("❌ Error: " + e.getMessage());
-                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(RegisterActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         registerButton.setEnabled(true);
                     });
                 }

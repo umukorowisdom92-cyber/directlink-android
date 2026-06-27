@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Find views
         serverUrlInput = findViewById(R.id.serverUrlInput);
         connectButton = findViewById(R.id.connectButton);
         logoutButton = findViewById(R.id.logoutButton);
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
         contactsText = findViewById(R.id.contactsText);
         userNameDisplay = findViewById(R.id.userNameDisplay);
 
+        // Load saved preferences
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         String savedUrl = prefs.getString("server_url", "http://10.0.0.2:3030");
         String username = prefs.getString("username", "User");
@@ -37,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         userNameDisplay.setText("👤 " + username);
         statusText.setText("⚪ Status: Ready");
 
-        // Logout
+        // Logout button
         logoutButton.setOnClickListener(v -> {
             SharedPreferences.Editor editor = prefs.edit();
             editor.remove("auth_token");
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
             finish();
         });
 
+        // Connect button
         connectButton.setOnClickListener(v -> {
             String serverUrl = serverUrlInput.getText().toString().trim();
             if (serverUrl.isEmpty()) {
