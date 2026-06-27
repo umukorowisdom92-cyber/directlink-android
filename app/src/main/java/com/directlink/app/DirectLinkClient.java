@@ -10,7 +10,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class DirectLinkClient {
-    private static String serverUrl = "http://10.55.192.27:3030";
+    // UPDATE THIS WITH YOUR CURRENT IP
+    private static String serverUrl = "http://10.72.80.143:3030";
     private static String authToken = null;
     private static String username = null;
 
@@ -113,9 +114,6 @@ public class DirectLinkClient {
 
         if (authToken != null && !authToken.isEmpty()) {
             conn.setRequestProperty("Authorization", "Bearer " + authToken);
-            Log.d("DirectLink", "Using auth token for POST");
-        } else {
-            Log.w("DirectLink", "No auth token available for POST");
         }
 
         conn.setDoOutput(true);
@@ -167,9 +165,6 @@ public class DirectLinkClient {
 
         if (authToken != null && !authToken.isEmpty()) {
             conn.setRequestProperty("Authorization", "Bearer " + authToken);
-            Log.d("DirectLink", "Using auth token for GET");
-        } else {
-            Log.w("DirectLink", "No auth token available for GET");
         }
 
         int responseCode = conn.getResponseCode();
