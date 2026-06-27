@@ -12,7 +12,8 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 
 public class DirectLinkClient {
-    private static String serverUrl = "http://10.0.0.2:3030";
+    // Change this to your server IP!
+    private static String serverUrl = "http://10.55.192.27:3030";
     private static String authToken = null;
     private static String username = null;
     
@@ -20,7 +21,7 @@ public class DirectLinkClient {
         if (url == null || url.isEmpty()) {
             throw new IllegalArgumentException("Server URL cannot be empty");
         }
-        // Ensure URL doesn't end with /
+        url = url.trim();
         if (url.endsWith("/")) {
             url = url.substring(0, url.length() - 1);
         }
@@ -33,6 +34,10 @@ public class DirectLinkClient {
     }
     
     public static String register(String username, String phone, String password) throws Exception {
+        username = username.trim();
+        phone = phone.trim();
+        password = password.trim();
+        
         JSONObject json = new JSONObject();
         json.put("username", username);
         json.put("phone_number", phone);
@@ -41,6 +46,9 @@ public class DirectLinkClient {
     }
     
     public static String login(String phone, String password) throws Exception {
+        phone = phone.trim();
+        password = password.trim();
+        
         JSONObject json = new JSONObject();
         json.put("phone_number", phone);
         json.put("password", password);
@@ -58,10 +66,12 @@ public class DirectLinkClient {
     }
     
     public static String checkUser(String phone) throws Exception {
+        phone = phone.trim();
         return sendGetRequest("/check?phone=" + java.net.URLEncoder.encode(phone, "UTF-8"));
     }
     
     public static String createGroup(String name, String membersJson) throws Exception {
+        name = name.trim();
         JSONObject json = new JSONObject();
         json.put("name", name);
         json.put("members", new JSONArray(membersJson));
@@ -95,7 +105,6 @@ public class DirectLinkClient {
         
         int responseCode = conn.getResponseCode();
         if (responseCode >= 400) {
-            // Read error stream
             BufferedReader errorReader = new BufferedReader(
                 new InputStreamReader(conn.getErrorStream())
             );
