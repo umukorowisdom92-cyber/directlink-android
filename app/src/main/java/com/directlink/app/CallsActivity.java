@@ -3,12 +3,10 @@ package com.directlink.app;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CallsActivity extends AppCompatActivity {
+public class CallsActivity extends BaseActivity {
 
     private ListView callsListView;
 
@@ -16,6 +14,9 @@ public class CallsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calls);
+
+        // Setup bottom navigation (from BaseActivity)
+        setupBottomNavigation();
 
         callsListView = findViewById(R.id.callsListView);
 

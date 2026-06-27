@@ -7,13 +7,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -22,7 +19,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     private EditText searchInput;
     private EditText serverUrlInput;
@@ -33,12 +30,13 @@ public class MainActivity extends AppCompatActivity {
     private List<ChatItem> chatList = new ArrayList<>();
     private FloatingActionButton fabAddUser;
 
-    private LinearLayout navChats, navContacts, navCalls, navSettings;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Setup bottom navigation (from BaseActivity)
+        setupBottomNavigation();
 
         searchInput = findViewById(R.id.searchInput);
         serverUrlInput = findViewById(R.id.serverUrlInput);
@@ -46,11 +44,6 @@ public class MainActivity extends AppCompatActivity {
         statusText = findViewById(R.id.statusText);
         chatsRecyclerView = findViewById(R.id.chatsRecyclerView);
         fabAddUser = findViewById(R.id.fabAddUser);
-
-        navChats = findViewById(R.id.navChats);
-        navContacts = findViewById(R.id.navContacts);
-        navCalls = findViewById(R.id.navCalls);
-        navSettings = findViewById(R.id.navSettings);
 
         chatAdapter = new ChatAdapter(chatList);
         chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -61,27 +54,6 @@ public class MainActivity extends AppCompatActivity {
         serverUrlInput.setText(savedUrl);
 
         loadSampleChats();
-
-        // Bottom Navigation - Open respective activities
-        navChats.setOnClickListener(v -> {
-            highlightNav(navChats);
-            // Already on chats
-        });
-
-        navContacts.setOnClickListener(v -> {
-            highlightNav(navContacts);
-            startActivity(new Intent(MainActivity.this, ContactsActivity.class));
-        });
-
-        navCalls.setOnClickListener(v -> {
-            highlightNav(navCalls);
-            startActivity(new Intent(MainActivity.this, CallsActivity.class));
-        });
-
-        navSettings.setOnClickListener(v -> {
-            highlightNav(navSettings);
-            startActivity(new Intent(MainActivity.this, SettingsActivity.class));
-        });
 
         fabAddUser.setOnClickListener(v -> showAddUserDialog());
 
@@ -135,40 +107,17 @@ public class MainActivity extends AppCompatActivity {
                 }
             }, 500);
         }
-
-        highlightNav(navChats);
-    }
-
-    private void highlightNav(LinearLayout selected) {
-        resetNav(navChats);
-        resetNav(navContacts);
-        resetNav(navCalls);
-        resetNav(navSettings);
-
-        TextView label = (TextView) selected.getChildAt(1);
-        if (label != null) {
-            label.setTextColor(0xFF3F51B5);
-            label.setTypeface(null, android.graphics.Typeface.BOLD);
-        }
-    }
-
-    private void resetNav(LinearLayout nav) {
-        TextView label = (TextView) nav.getChildAt(1);
-        if (label != null) {
-            label.setTextColor(0xFF666666);
-            label.setTypeface(null, android.graphics.Typeface.NORMAL);
-        }
     }
 
     private void showAddUserDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("➕ Add New User");
 
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
         layout.setPadding(40, 20, 40, 20);
 
-        Button qrButton = new Button(this);
+        android.widget.Button qrButton = new android.widget.Button(this);
         qrButton.setText("📷 Scan QR Code");
         qrButton.setBackgroundColor(0xFF3F51B5);
         qrButton.setTextColor(0xFFFFFFFF);
@@ -178,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
         });
         layout.addView(qrButton);
 
-        TextView divider = new TextView(this);
+        android.widget.TextView divider = new android.widget.TextView(this);
         divider.setText("────────── OR ──────────");
         divider.setGravity(android.view.Gravity.CENTER);
         divider.setPadding(0, 20, 0, 20);

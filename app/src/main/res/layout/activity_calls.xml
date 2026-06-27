@@ -1,26 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#f5f5f5">
 
     <LinearLayout
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:orientation="horizontal"
         android:padding="16dp"
         android:background="#3F51B5"
-        android:gravity="center_vertical">
-
-        <Button
-            android:id="@+id/backButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="←"
-            android:background="@android:color/transparent"
-            android:textColor="#FFFFFF"
-            android:textSize="24sp" />
+        android:gravity="center_vertical"
+        android:layout_alignParentTop="true">
 
         <TextView
             android:layout_width="match_parent"
@@ -37,7 +29,14 @@
         android:id="@+id/callsListView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@id/topBar"
+        android:layout_above="@+id/bottomNav"
         android:background="#ffffff"
         android:padding="8dp" />
 
-</LinearLayout>
+    <!-- Bottom Navigation (from BaseActivity) -->
+    <include
+        android:id="@+id/bottomNav"
+        layout="@layout/bottom_nav" />
+
+</RelativeLayout>

@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class SettingsActivity extends AppCompatActivity {
 
     private TextView serverUrlText, versionText, usernameText;
-    private Button logoutButton, clearDataButton;
+    private Button logoutButton, clearDataButton, backButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +23,7 @@ public class SettingsActivity extends AppCompatActivity {
         usernameText = findViewById(R.id.usernameText);
         logoutButton = findViewById(R.id.logoutButton);
         clearDataButton = findViewById(R.id.clearDataButton);
+        backButton = findViewById(R.id.backButton);
 
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         String username = prefs.getString("username", "User");
@@ -31,6 +32,8 @@ public class SettingsActivity extends AppCompatActivity {
         usernameText.setText("👤 " + username);
         serverUrlText.setText("🌐 Server: " + serverUrl);
         versionText.setText("📱 Version: 1.0.1");
+
+        backButton.setOnClickListener(v -> finish());
 
         logoutButton.setOnClickListener(v -> {
             SharedPreferences.Editor editor = prefs.edit();

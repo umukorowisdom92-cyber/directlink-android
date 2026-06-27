@@ -1,14 +1,12 @@
 package com.directlink.app;
 
 import android.os.Bundle;
-import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContactsActivity extends AppCompatActivity {
+public class ContactsActivity extends BaseActivity {
 
     private RecyclerView contactsRecyclerView;
     private ChatAdapter contactsAdapter;
@@ -19,9 +17,11 @@ public class ContactsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
 
+        // Setup bottom navigation (from BaseActivity)
+        setupBottomNavigation();
+
         contactsRecyclerView = findViewById(R.id.contactsRecyclerView);
 
-        // Sample contacts
         contactsList.add(new ChatItem("Alice", "Online", "Now", 0, true));
         contactsList.add(new ChatItem("Bob", "Last seen 10min ago", "10min", 0, false));
         contactsList.add(new ChatItem("Charlie", "Online", "Now", 0, true));
