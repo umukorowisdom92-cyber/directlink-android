@@ -35,7 +35,6 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Setup bottom navigation (from BaseActivity)
         setupBottomNavigation();
 
         searchInput = findViewById(R.id.searchInput);

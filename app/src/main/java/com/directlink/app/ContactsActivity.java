@@ -17,7 +17,6 @@ public class ContactsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
 
-        // Setup bottom navigation (from BaseActivity)
         setupBottomNavigation();
 
         contactsRecyclerView = findViewById(R.id.contactsRecyclerView);

@@ -44,33 +44,28 @@ public class BaseActivity extends AppCompatActivity {
         });
 
         navSettings.setOnClickListener(v -> {
-            if (!(this instanceof SettingsActivity)) {
-                startActivity(new Intent(this, SettingsActivity.class));
-                finish();
-            }
+            // Always open SettingsActivity
+            startActivity(new Intent(this, SettingsActivity.class));
+            finish();
         });
 
-        // Highlight current page
         highlightCurrentNav();
     }
 
     protected void highlightCurrentNav() {
-        // Reset all
         resetNav(navChats);
         resetNav(navContacts);
         resetNav(navCalls);
         resetNav(navSettings);
 
-        // Highlight based on current activity
         if (this instanceof MainActivity) {
             highlightNav(navChats);
         } else if (this instanceof ContactsActivity) {
             highlightNav(navContacts);
         } else if (this instanceof CallsActivity) {
             highlightNav(navCalls);
-        } else if (this instanceof SettingsActivity) {
-            // Settings - no highlight, just show
         }
+        // Settings - no highlight
     }
 
     protected void highlightNav(LinearLayout nav) {

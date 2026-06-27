@@ -15,7 +15,6 @@ public class CallsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calls);
 
-        // Setup bottom navigation (from BaseActivity)
         setupBottomNavigation();
 
         callsListView = findViewById(R.id.callsListView);
