@@ -109,7 +109,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private void loadData() {
         new Thread(() -> {
             try {
-                // Load contacts
+                // Load contacts (only people you've added)
                 String contactsResult = DirectLinkClient.getContacts();
                 JSONArray contacts = new JSONArray(contactsResult);
 
@@ -131,7 +131,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private void updateChatList(JSONArray contacts, JSONArray requests) {
         chatList.clear();
 
-        // Add friend requests first
+        // Add friend requests first (these appear in chat list)
         try {
             for (int i = 0; i < requests.length(); i++) {
                 JSONObject req = requests.getJSONObject(i);
@@ -144,13 +144,14 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
             e.printStackTrace();
         }
 
-        // Add chats/contacts
+        // Add contacts (people you've added)
         try {
             for (int i = 0; i < contacts.length(); i++) {
                 JSONObject contact = contacts.getJSONObject(i);
                 String username = contact.getString("username");
                 String phone = contact.getString("phone_number");
                 boolean online = contact.optBoolean("online", false);
+                // These are contacts - clicking them should open chat
                 chatList.add(new ChatItem(username, phone, "Tap to chat", "Now", 0, online));
             }
         } catch (Exception e) {
@@ -198,11 +199,9 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
     @Override
     public void onChatClick(String name, String phone) {
-        Intent intent = new Intent(this, UserProfileActivity.class);
-        intent.putExtra("username", name);
-        intent.putExtra("phone", phone);
-        intent.putExtra("online", true);
-        startActivity(intent);
+        // Chat click - should open chat, not profile
+        Toast.makeText(this, "💬 Opening chat with " + name, Toast.LENGTH_SHORT).show();
+        // TODO: Open ChatActivity
     }
 
     // Add user flow
@@ -230,7 +229,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         divider.setPadding(0, 20, 0, 20);
         layout.addView(divider);
 
-        final EditText phoneInput = new EditText(this);
+        final android.widget.EditText phoneInput = new android.widget.EditText(this);
         phoneInput.setHint("📞 Enter phone number");
         phoneInput.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
         phoneInput.setPadding(20, 20, 20, 20);
@@ -260,7 +259,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 String serverUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
                 DirectLinkClient.init(serverUrl);
 
-                // Check if user exists
                 String result = DirectLinkClient.checkUser(phone);
                 JSONObject json = new JSONObject(result);
 

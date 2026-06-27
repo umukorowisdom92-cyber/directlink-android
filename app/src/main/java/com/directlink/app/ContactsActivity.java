@@ -1,8 +1,10 @@
 package com.directlink.app;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -29,7 +31,23 @@ public class ContactsActivity extends BaseActivity {
         contactsRecyclerView = findViewById(R.id.contactsRecyclerView);
         emptyText = findViewById(R.id.emptyText);
 
-        contactsAdapter = new ChatAdapter(contactsList, null);
+        // Custom adapter for contacts with click listener
+        contactsAdapter = new ChatAdapter(contactsList, new ChatAdapter.OnFriendRequestListener() {
+            @Override
+            public void onAccept(String requestId, String name, String phone) {}
+            @Override
+            public void onReject(String requestId) {}
+            @Override
+            public void onChatClick(String name, String phone) {
+                // In contacts, click opens profile
+                Intent intent = new Intent(ContactsActivity.this, UserProfileActivity.class);
+                intent.putExtra("username", name);
+                intent.putExtra("phone", phone);
+                intent.putExtra("online", true);
+                startActivity(intent);
+            }
+        });
+
         contactsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         contactsRecyclerView.setAdapter(contactsAdapter);
 
@@ -57,11 +75,11 @@ public class ContactsActivity extends BaseActivity {
                     }
 
                     if (contactsList.isEmpty()) {
-                        emptyText.setVisibility(android.view.View.VISIBLE);
-                        contactsRecyclerView.setVisibility(android.view.View.GONE);
+                        emptyText.setVisibility(View.VISIBLE);
+                        contactsRecyclerView.setVisibility(View.GONE);
                     } else {
-                        emptyText.setVisibility(android.view.View.GONE);
-                        contactsRecyclerView.setVisibility(android.view.View.VISIBLE);
+                        emptyText.setVisibility(View.GONE);
+                        contactsRecyclerView.setVisibility(View.VISIBLE);
                         contactsAdapter.notifyDataSetChanged();
                     }
                 });
