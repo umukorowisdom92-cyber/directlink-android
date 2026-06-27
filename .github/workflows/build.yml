@@ -43,13 +43,11 @@ jobs:
     - name: Make gradlew executable
       run: chmod +x gradlew
     
-    - name: Build APK
-      run: |
-        ls -la
-        ./gradlew assembleRelease
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: directlink-app
-        path: app/build/outputs/apk/release/*.apk
+        name: directlink-app-debug
+        path: app/build/outputs/apk/debug/*.apk
