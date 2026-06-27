@@ -26,6 +26,10 @@ public class DirectLinkClient {
         Log.d("DirectLink", "Server set to: " + serverUrl);
     }
 
+    public static void setAuthToken(String token) {
+        authToken = token;
+    }
+
     public static String getContacts() throws Exception {
         return sendGetRequest("/contacts");
     }
@@ -80,6 +84,7 @@ public class DirectLinkClient {
             if (obj.has("token")) {
                 authToken = obj.getString("token");
                 username = obj.getString("username");
+                Log.d("DirectLink", "Auth token set: " + authToken);
             }
         } catch (Exception e) {}
 
@@ -106,8 +111,11 @@ public class DirectLinkClient {
         conn.setConnectTimeout(5000);
         conn.setReadTimeout(10000);
 
-        if (authToken != null) {
+        if (authToken != null && !authToken.isEmpty()) {
             conn.setRequestProperty("Authorization", "Bearer " + authToken);
+            Log.d("DirectLink", "Using auth token for POST");
+        } else {
+            Log.w("DirectLink", "No auth token available for POST");
         }
 
         conn.setDoOutput(true);
@@ -157,8 +165,11 @@ public class DirectLinkClient {
         conn.setConnectTimeout(5000);
         conn.setReadTimeout(10000);
 
-        if (authToken != null) {
+        if (authToken != null && !authToken.isEmpty()) {
             conn.setRequestProperty("Authorization", "Bearer " + authToken);
+            Log.d("DirectLink", "Using auth token for GET");
+        } else {
+            Log.w("DirectLink", "No auth token available for GET");
         }
 
         int responseCode = conn.getResponseCode();

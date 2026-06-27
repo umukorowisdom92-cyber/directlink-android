@@ -29,7 +29,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private ChatAdapter chatAdapter;
     private List<ChatItem> chatList = new ArrayList<>();
     private FloatingActionButton fabAddUser;
-    private String currentUsername;
+    private String authToken;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,9 +46,13 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         fabAddUser = findViewById(R.id.fabAddUser);
 
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
-        currentUsername = prefs.getString("username", "");
+        authToken = prefs.getString("auth_token", "");
         String savedUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
+        String username = prefs.getString("username", "User");
         serverUrlInput.setText(savedUrl);
+
+        // Set auth token in client
+        DirectLinkClient.setAuthToken(authToken);
 
         chatAdapter = new ChatAdapter(chatList, this);
         chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -73,6 +77,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
             new Thread(() -> {
                 try {
                     DirectLinkClient.init(serverUrl);
+                    DirectLinkClient.setAuthToken(authToken);
                     loadData();
                     new Handler(Looper.getMainLooper()).post(() -> {
                         statusText.setText("✅ Connected to: " + serverUrl);
@@ -109,11 +114,9 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private void loadData() {
         new Thread(() -> {
             try {
-                // Load contacts (only people you've added)
                 String contactsResult = DirectLinkClient.getContacts();
                 JSONArray contacts = new JSONArray(contactsResult);
 
-                // Load friend requests
                 String requestsResult = DirectLinkClient.getFriendRequests();
                 JSONArray requests = new JSONArray(requestsResult);
 
@@ -122,7 +125,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 });
             } catch (Exception e) {
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    statusText.setText("❌ Error loading data: " + e.getMessage());
+                    statusText.setText("❌ Error: " + e.getMessage());
                 });
             }
         }).start();
@@ -131,7 +134,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private void updateChatList(JSONArray contacts, JSONArray requests) {
         chatList.clear();
 
-        // Add friend requests first (these appear in chat list)
+        // Friend requests
         try {
             for (int i = 0; i < requests.length(); i++) {
                 JSONObject req = requests.getJSONObject(i);
@@ -144,14 +147,13 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
             e.printStackTrace();
         }
 
-        // Add contacts (people you've added)
+        // Contacts
         try {
             for (int i = 0; i < contacts.length(); i++) {
                 JSONObject contact = contacts.getJSONObject(i);
                 String username = contact.getString("username");
                 String phone = contact.getString("phone_number");
                 boolean online = contact.optBoolean("online", false);
-                // These are contacts - clicking them should open chat
                 chatList.add(new ChatItem(username, phone, "Tap to chat", "Now", 0, online));
             }
         } catch (Exception e) {
@@ -162,15 +164,15 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         statusText.setText("📋 " + chatList.size() + " items");
     }
 
-    // Friend request actions
     @Override
     public void onAccept(String requestId, String name, String phone) {
         new Thread(() -> {
             try {
+                DirectLinkClient.setAuthToken(authToken);
                 String result = DirectLinkClient.acceptFriendRequest(requestId);
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Toast.makeText(this, "Friend request accepted!", Toast.LENGTH_SHORT).show();
-                    loadData(); // Refresh
+                    loadData();
                 });
             } catch (Exception e) {
                 new Handler(Looper.getMainLooper()).post(() -> {
@@ -184,10 +186,11 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     public void onReject(String requestId) {
         new Thread(() -> {
             try {
+                DirectLinkClient.setAuthToken(authToken);
                 String result = DirectLinkClient.rejectFriendRequest(requestId);
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Toast.makeText(this, "Friend request rejected", Toast.LENGTH_SHORT).show();
-                    loadData(); // Refresh
+                    loadData();
                 });
             } catch (Exception e) {
                 new Handler(Looper.getMainLooper()).post(() -> {
@@ -199,12 +202,10 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
     @Override
     public void onChatClick(String name, String phone) {
-        // Chat click - should open chat, not profile
         Toast.makeText(this, "💬 Opening chat with " + name, Toast.LENGTH_SHORT).show();
-        // TODO: Open ChatActivity
+        // TODO: Open ChatActivity when built
     }
 
-    // Add user flow
     private void showAddUserDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("➕ Add New User");
@@ -229,7 +230,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         divider.setPadding(0, 20, 0, 20);
         layout.addView(divider);
 
-        final android.widget.EditText phoneInput = new android.widget.EditText(this);
+        final EditText phoneInput = new EditText(this);
         phoneInput.setHint("📞 Enter phone number");
         phoneInput.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
         phoneInput.setPadding(20, 20, 20, 20);
@@ -258,6 +259,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
                 String serverUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
                 DirectLinkClient.init(serverUrl);
+                DirectLinkClient.setAuthToken(authToken);
 
                 String result = DirectLinkClient.checkUser(phone);
                 JSONObject json = new JSONObject(result);
@@ -267,18 +269,12 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                         if (json.has("on_directlink") && json.getBoolean("on_directlink")) {
                             String username = json.getString("username");
                             String phoneNumber = json.getString("phone_number");
-                            boolean online = json.optBoolean("online", false);
-
-                            // Send friend request
                             sendFriendRequest(username, phoneNumber);
                         } else {
                             new android.app.AlertDialog.Builder(MainActivity.this)
                                 .setTitle("❌ User Not Found")
-                                .setMessage("No user found with phone number: " + phone + "\n\nWould you like to invite them to join DirectLink?")
-                                .setPositiveButton("Invite", (dialog, which) -> {
-                                    Toast.makeText(MainActivity.this, "📤 Invitation sent!", Toast.LENGTH_SHORT).show();
-                                })
-                                .setNegativeButton("Cancel", null)
+                                .setMessage("No user found with phone number: " + phone)
+                                .setPositiveButton("OK", null)
                                 .show();
                         }
                     } catch (Exception e) {
@@ -296,10 +292,11 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private void sendFriendRequest(String username, String phone) {
         new Thread(() -> {
             try {
+                DirectLinkClient.setAuthToken(authToken);
                 String result = DirectLinkClient.sendFriendRequest(username);
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Toast.makeText(this, "Friend request sent to " + username + "!", Toast.LENGTH_SHORT).show();
-                    loadData(); // Refresh
+                    loadData();
                 });
             } catch (Exception e) {
                 new Handler(Looper.getMainLooper()).post(() -> {
@@ -309,7 +306,5 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         }).start();
     }
 
-    private void filterChats(String query) {
-        // TODO: Implement proper search
-    }
+    private void filterChats(String query) {}
 }
