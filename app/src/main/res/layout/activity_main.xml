@@ -38,8 +38,7 @@
         android:background="#ffffff"
         android:layout_margin="8dp"
         android:drawableStart="@android:drawable/ic_menu_search"
-        android:drawablePadding="8dp"
-        android:borderless="false" />
+        android:drawablePadding="8dp" />
 
     <!-- Connection Status -->
     <TextView
@@ -53,12 +52,43 @@
         android:textColor="#666666"
         android:background="#f0f0f0" />
 
+    <!-- Server URL -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/statusText"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="#ffffff">
+
+        <EditText
+            android:id="@+id/serverUrlInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Server URL"
+            android:padding="8dp"
+            android:background="@android:drawable/editbox_background"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/connectButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connect"
+            android:background="#3F51B5"
+            android:textColor="#ffffff"
+            android:padding="8dp"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
     <!-- Chat List -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/statusText"
+        android:layout_below="@id/serverUrlInput"
         android:layout_above="@+id/bottomNav"
         android:background="#ffffff"
         android:padding="0dp" />
