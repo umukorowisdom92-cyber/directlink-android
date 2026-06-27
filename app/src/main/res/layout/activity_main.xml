@@ -6,15 +6,41 @@
     android:padding="16dp"
     android:background="#f5f5f5">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🚀 DirectLink"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="#3F51B5"
-        android:gravity="center"
-        android:layout_marginBottom="20dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🚀 DirectLink"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#3F51B5" />
+
+        <TextView
+            android:id="@+id/userNameDisplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:paddingEnd="12dp" />
+
+        <Button
+            android:id="@+id/logoutButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:background="#FF5722"
+            android:textColor="#ffffff"
+            android:padding="8dp"
+            android:textSize="12sp" />
+
+    </LinearLayout>
 
     <EditText
         android:id="@+id/serverUrlInput"
@@ -23,6 +49,7 @@
         android:hint="Server URL"
         android:padding="12dp"
         android:background="#ffffff"
+        android:layout_marginTop="12dp"
         android:layout_marginBottom="12dp" />
 
     <Button
@@ -39,7 +66,7 @@
         android:id="@+id/statusText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Status: Ready"
+        android:text="Status: Not connected"
         android:padding="8dp"
         android:textSize="14sp"
         android:textColor="#666666"
