@@ -10,7 +10,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class DirectLinkClient {
-    // UPDATE THIS WITH YOUR CURRENT IP
     private static String serverUrl = "http://10.72.80.143:3030";
     private static String authToken = null;
     private static String username = null;
