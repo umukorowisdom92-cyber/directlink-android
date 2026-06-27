@@ -1,5 +1,6 @@
 package com.directlink.app;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,7 +25,15 @@ public class MainActivity extends AppCompatActivity {
         statusText = findViewById(R.id.statusText);
         contactsText = findViewById(R.id.contactsText);
 
-        serverUrlInput.setText("http://10.0.0.2:3030");
+        // Load saved server URL from SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
+        String savedUrl = prefs.getString("server_url", "http://10.0.0.2:3030");
+        serverUrlInput.setText(savedUrl);
+
+        // Auto-connect if we have a saved URL
+        if (!savedUrl.isEmpty()) {
+            connectToServer(savedUrl);
+        }
 
         connectButton.setOnClickListener(v -> {
             String serverUrl = serverUrlInput.getText().toString();
@@ -33,12 +42,27 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             
-            DirectLinkClient.init(serverUrl);
-            statusText.setText("Connected to: " + serverUrl);
-            Toast.makeText(MainActivity.this, "Connected!", Toast.LENGTH_SHORT).show();
-            
-            String result = DirectLinkClient.getContacts();
-            contactsText.setText("Contacts: " + result);
+            // Save the server URL
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("server_url", serverUrl);
+            editor.apply();
+
+            connectToServer(serverUrl);
         });
+    }
+
+    private void connectToServer(String serverUrl) {
+        try {
+            DirectLinkClient.init(serverUrl);
+            statusText.setText("✅ Connected to: " + serverUrl);
+            Toast.makeText(MainActivity.this, "Connected!", Toast.LENGTH_SHORT).show();
+
+            // Load contacts
+            String result = DirectLinkClient.getContacts();
+            contactsText.setText("📋 Contacts: " + result);
+        } catch (Exception e) {
+            statusText.setText("❌ Error: " + e.getMessage());
+            Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 }
