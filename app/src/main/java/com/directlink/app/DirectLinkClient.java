@@ -2,7 +2,11 @@ package com.directlink.app;
 
 public class DirectLinkClient {
     static {
-        System.loadLibrary("directlink_android_rust");
+        try {
+            System.loadLibrary("directlink_android_rust");
+        } catch (UnsatisfiedLinkError e) {
+            e.printStackTrace();
+        }
     }
     
     public static native void init(String serverUrl);
