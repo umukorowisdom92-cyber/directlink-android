@@ -2,6 +2,8 @@ package com.directlink.app;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -29,43 +31,62 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         String savedUrl = prefs.getString("server_url", "http://10.0.0.2:3030");
         serverUrlInput.setText(savedUrl);
-        statusText.setText("Status: Ready");
+        statusText.setText("⚪ Status: Ready");
 
         connectButton.setOnClickListener(v -> {
-            String serverUrl = serverUrlInput.getText().toString();
+            String serverUrl = serverUrlInput.getText().toString().trim();
             if (serverUrl.isEmpty()) {
                 Toast.makeText(MainActivity.this, "Please enter server URL", Toast.LENGTH_SHORT).show();
                 return;
             }
             
+            // Save URL
             SharedPreferences.Editor editor = prefs.edit();
             editor.putString("server_url", serverUrl);
             editor.apply();
 
-            connectToServer(serverUrl);
+            // Show connecting status immediately
+            statusText.setText("⏳ Connecting to: " + serverUrl);
+            contactsText.setText("⏳ Checking connection...");
+            connectButton.setEnabled(false);
+
+            // Use a thread to avoid blocking UI
+            new Thread(() -> {
+                try {
+                    DirectLinkClient.init(serverUrl);
+                    
+                    // Try to get contacts to verify connection
+                    String result = DirectLinkClient.getContacts();
+                    
+                    // Update UI on main thread
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        statusText.setText("✅ Connected to: " + serverUrl);
+                        contactsText.setText("📋 Contacts: " + result);
+                        Toast.makeText(MainActivity.this, "Connected!", Toast.LENGTH_SHORT).show();
+                        connectButton.setEnabled(true);
+                    });
+                    
+                } catch (Exception e) {
+                    // Error - update UI on main thread
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        String errorMsg = e.getMessage();
+                        statusText.setText("❌ Connection failed: " + errorMsg);
+                        contactsText.setText("❌ Error: " + errorMsg);
+                        Toast.makeText(MainActivity.this, "Failed to connect: " + errorMsg, Toast.LENGTH_LONG).show();
+                        connectButton.setEnabled(true);
+                    });
+                }
+            }).start();
         });
 
         // Auto-connect if we have a saved URL
         if (!savedUrl.isEmpty()) {
-            connectToServer(savedUrl);
-        }
-    }
-
-    private void connectToServer(String serverUrl) {
-        try {
-            statusText.setText("⏳ Connecting to: " + serverUrl);
-            
-            DirectLinkClient.init(serverUrl);
-            
-            statusText.setText("✅ Connected to: " + serverUrl);
-            Toast.makeText(this, "Connected!", Toast.LENGTH_SHORT).show();
-
-            String result = DirectLinkClient.getContacts();
-            contactsText.setText("📋 Contacts: " + result);
-            
-        } catch (Exception e) {
-            statusText.setText("❌ Error: " + e.getMessage());
-            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            // Auto-connect after a short delay
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (!savedUrl.isEmpty()) {
+                    connectButton.performClick();
+                }
+            }, 500);
         }
     }
 }
