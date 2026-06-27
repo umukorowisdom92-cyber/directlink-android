@@ -24,24 +24,20 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Find views
         phoneInput = findViewById(R.id.loginPhone);
         passwordInput = findViewById(R.id.loginPassword);
         loginButton = findViewById(R.id.loginButton);
         statusText = findViewById(R.id.loginStatus);
         goToRegister = findViewById(R.id.goToRegister);
 
-        // Get server URL from SharedPreferences
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         String serverUrl = prefs.getString("server_url", "http://10.0.0.2:3030");
 
-        // Go to register
         goToRegister.setOnClickListener(v -> {
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
             finish();
         });
 
-        // Login button
         loginButton.setOnClickListener(v -> {
             String phone = phoneInput.getText().toString().trim();
             String password = passwordInput.getText().toString().trim();
@@ -61,26 +57,33 @@ public class LoginActivity extends AppCompatActivity {
                     JSONObject json = new JSONObject(result);
 
                     new Handler(Looper.getMainLooper()).post(() -> {
-                        if (json.has("token")) {
-                            statusText.setText("✅ Login successful!");
+                        try {
+                            if (json.has("token")) {
+                                String token = json.getString("token");
+                                String username = json.getString("username");
+                                
+                                statusText.setText("✅ Login successful!");
 
-                            // Save user info
-                            SharedPreferences.Editor editor = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE).edit();
-                            editor.putString("auth_token", json.getString("token"));
-                            editor.putString("username", json.getString("username"));
-                            editor.apply();
+                                SharedPreferences.Editor editor = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE).edit();
+                                editor.putString("auth_token", token);
+                                editor.putString("username", username);
+                                editor.apply();
 
-                            Toast.makeText(LoginActivity.this, "Welcome " + json.getString("username") + "!", Toast.LENGTH_LONG).show();
+                                Toast.makeText(LoginActivity.this, "Welcome " + username + "!", Toast.LENGTH_LONG).show();
 
-                            // Go to main activity
-                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                            finish();
-                        } else if (json.has("error")) {
-                            statusText.setText("❌ " + json.getString("error"));
-                            Toast.makeText(LoginActivity.this, "Error: " + json.getString("error"), Toast.LENGTH_LONG).show();
-                        } else {
-                            statusText.setText("❌ Login failed");
-                            Toast.makeText(LoginActivity.this, "Login failed", Toast.LENGTH_LONG).show();
+                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                finish();
+                            } else if (json.has("error")) {
+                                String error = json.getString("error");
+                                statusText.setText("❌ " + error);
+                                Toast.makeText(LoginActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                            } else {
+                                statusText.setText("❌ Login failed");
+                                Toast.makeText(LoginActivity.this, "Login failed", Toast.LENGTH_LONG).show();
+                            }
+                        } catch (Exception e) {
+                            statusText.setText("❌ Error: " + e.getMessage());
+                            Toast.makeText(LoginActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         }
                         loginButton.setEnabled(true);
                     });

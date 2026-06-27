@@ -24,7 +24,6 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        // Find views
         usernameInput = findViewById(R.id.registerUsername);
         phoneInput = findViewById(R.id.registerPhone);
         passwordInput = findViewById(R.id.registerPassword);
@@ -32,17 +31,14 @@ public class RegisterActivity extends AppCompatActivity {
         statusText = findViewById(R.id.registerStatus);
         goToLogin = findViewById(R.id.goToLogin);
 
-        // Get server URL from SharedPreferences
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         String serverUrl = prefs.getString("server_url", "http://10.0.0.2:3030");
 
-        // Go to login
         goToLogin.setOnClickListener(v -> {
             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
             finish();
         });
 
-        // Register button
         registerButton.setOnClickListener(v -> {
             String username = usernameInput.getText().toString().trim();
             String phone = phoneInput.getText().toString().trim();
@@ -68,19 +64,24 @@ public class RegisterActivity extends AppCompatActivity {
                     JSONObject json = new JSONObject(result);
 
                     new Handler(Looper.getMainLooper()).post(() -> {
-                        if (json.has("token")) {
-                            statusText.setText("✅ Registration successful!");
-                            Toast.makeText(RegisterActivity.this, "Account created! Please login.", Toast.LENGTH_LONG).show();
+                        try {
+                            if (json.has("token")) {
+                                statusText.setText("✅ Registration successful!");
+                                Toast.makeText(RegisterActivity.this, "Account created! Please login.", Toast.LENGTH_LONG).show();
 
-                            // Go to login
-                            startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
-                            finish();
-                        } else if (json.has("error")) {
-                            statusText.setText("❌ " + json.getString("error"));
-                            Toast.makeText(RegisterActivity.this, "Error: " + json.getString("error"), Toast.LENGTH_LONG).show();
-                        } else {
-                            statusText.setText("❌ Registration failed");
-                            Toast.makeText(RegisterActivity.this, "Registration failed", Toast.LENGTH_LONG).show();
+                                startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+                                finish();
+                            } else if (json.has("error")) {
+                                String error = json.getString("error");
+                                statusText.setText("❌ " + error);
+                                Toast.makeText(RegisterActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                            } else {
+                                statusText.setText("❌ Registration failed");
+                                Toast.makeText(RegisterActivity.this, "Registration failed", Toast.LENGTH_LONG).show();
+                            }
+                        } catch (Exception e) {
+                            statusText.setText("❌ Error: " + e.getMessage());
+                            Toast.makeText(RegisterActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         }
                         registerButton.setEnabled(true);
                     });
