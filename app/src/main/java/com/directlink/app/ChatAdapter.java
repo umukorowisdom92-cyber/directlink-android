@@ -1,9 +1,11 @@
 package com.directlink.app;
 
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
@@ -30,15 +32,26 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         holder.lastMessage.setText(chat.getLastMessage());
         holder.time.setText(chat.getTime());
 
-        // Avatar
+        // Avatar - set text and make it circular
         holder.avatar.setText(chat.getAvatarText());
-        holder.avatar.setBackgroundColor(chat.getAvatarColor());
+
+        // Create circular background with color
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.OVAL);
+        drawable.setColor(chat.getAvatarColor());
+        holder.avatar.setBackground(drawable);
 
         // Online/Offline dot
         if (chat.isOnline()) {
-            holder.onlineDot.setBackgroundResource(R.drawable.online_dot);
+            GradientDrawable dotDrawable = new GradientDrawable();
+            dotDrawable.setShape(GradientDrawable.OVAL);
+            dotDrawable.setColor(ContextCompat.getColor(holder.itemView.getContext(), android.R.color.holo_green_dark));
+            holder.onlineDot.setBackground(dotDrawable);
         } else {
-            holder.onlineDot.setBackgroundResource(R.drawable.offline_dot);
+            GradientDrawable dotDrawable = new GradientDrawable();
+            dotDrawable.setShape(GradientDrawable.OVAL);
+            dotDrawable.setColor(ContextCompat.getColor(holder.itemView.getContext(), android.R.color.darker_gray));
+            holder.onlineDot.setBackground(dotDrawable);
         }
 
         // Badge
