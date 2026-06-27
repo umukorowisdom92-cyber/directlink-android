@@ -22,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Find views
         serverUrlInput = findViewById(R.id.serverUrlInput);
         connectButton = findViewById(R.id.connectButton);
         logoutButton = findViewById(R.id.logoutButton);
@@ -30,26 +29,28 @@ public class MainActivity extends AppCompatActivity {
         contactsText = findViewById(R.id.contactsText);
         userNameDisplay = findViewById(R.id.userNameDisplay);
 
-        // Load saved preferences
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
-        String savedUrl = prefs.getString("server_url", "http://10.0.0.2:3030");
+        String savedUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
         String username = prefs.getString("username", "User");
 
         serverUrlInput.setText(savedUrl);
         userNameDisplay.setText("👤 " + username);
         statusText.setText("⚪ Status: Ready");
 
-        // Logout button
+        // Save the server URL immediately so other activities use it
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("server_url", savedUrl);
+        editor.apply();
+
         logoutButton.setOnClickListener(v -> {
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.remove("auth_token");
-            editor.remove("username");
-            editor.apply();
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.remove("auth_token");
+            edit.remove("username");
+            edit.apply();
             startActivity(new Intent(MainActivity.this, LoginActivity.class));
             finish();
         });
 
-        // Connect button
         connectButton.setOnClickListener(v -> {
             String serverUrl = serverUrlInput.getText().toString().trim();
             if (serverUrl.isEmpty()) {
@@ -57,9 +58,9 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putString("server_url", serverUrl);
-            editor.apply();
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putString("server_url", serverUrl);
+            edit.apply();
 
             statusText.setText("⏳ Connecting...");
             connectButton.setEnabled(false);
@@ -85,7 +86,6 @@ public class MainActivity extends AppCompatActivity {
             }).start();
         });
 
-        // Auto-connect
         if (!savedUrl.isEmpty()) {
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if (!savedUrl.isEmpty()) {

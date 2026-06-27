@@ -32,7 +32,10 @@ public class RegisterActivity extends AppCompatActivity {
         goToLogin = findViewById(R.id.goToLogin);
 
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
-        String serverUrl = prefs.getString("server_url", "http://10.0.0.2:3030");
+        String serverUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
+        
+        // Set the server URL in the client
+        DirectLinkClient.init(serverUrl);
 
         goToLogin.setOnClickListener(v -> {
             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
@@ -59,7 +62,6 @@ public class RegisterActivity extends AppCompatActivity {
 
             new Thread(() -> {
                 try {
-                    DirectLinkClient.init(serverUrl);
                     String result = DirectLinkClient.register(username, phone, password);
                     JSONObject json = new JSONObject(result);
 
