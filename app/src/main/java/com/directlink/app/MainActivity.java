@@ -2,9 +2,15 @@ package com.directlink.app;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.*;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,30 +43,33 @@ public class MainActivity extends AppCompatActivity {
         serverUrlInput.setText("http://10.0.0.2:3030");
 
         // Connect button click
-        connectButton.setOnClickListener(v -> {
-            String serverUrl = serverUrlInput.getText().toString();
-            if (serverUrl.isEmpty()) {
-                Toast.makeText(this, "Please enter server URL", Toast.LENGTH_SHORT).show();
-                return;
+        connectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String serverUrl = serverUrlInput.getText().toString();
+                if (serverUrl.isEmpty()) {
+                    Toast.makeText(MainActivity.this, "Please enter server URL", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Initialize the Rust client
+                DirectLinkClient.init(serverUrl);
+                statusText.setText("Connected to: " + serverUrl);
+                Toast.makeText(MainActivity.this, "Connected!", Toast.LENGTH_SHORT).show();
+                
+                // Load contacts
+                loadContacts();
             }
-            
-            // Initialize the Rust client
-            DirectLinkClient.init(serverUrl);
-            statusText.setText("Connected to: " + serverUrl);
-            Toast.makeText(this, "Connected!", Toast.LENGTH_SHORT).show();
-            
-            // Load contacts
-            loadContacts();
         });
     }
 
     private void loadContacts() {
         String result = DirectLinkClient.getContacts();
         try {
-            org.json.JSONArray array = new org.json.JSONArray(result);
+            JSONArray array = new JSONArray(result);
             contacts.clear();
             for (int i = 0; i < array.length(); i++) {
-                org.json.JSONObject obj = array.getJSONObject(i);
+                JSONObject obj = array.getJSONObject(i);
                 contacts.add(new Contact(
                     obj.getString("username"),
                     obj.getString("phone_number"),
