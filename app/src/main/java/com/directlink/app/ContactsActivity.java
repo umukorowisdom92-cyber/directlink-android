@@ -1,8 +1,14 @@
 package com.directlink.app;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.TextView;
+import android.widget.Toast;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +17,7 @@ public class ContactsActivity extends BaseActivity {
     private RecyclerView contactsRecyclerView;
     private ChatAdapter contactsAdapter;
     private List<ChatItem> contactsList = new ArrayList<>();
+    private TextView emptyText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,14 +27,49 @@ public class ContactsActivity extends BaseActivity {
         setupBottomNavigation();
 
         contactsRecyclerView = findViewById(R.id.contactsRecyclerView);
+        emptyText = findViewById(R.id.emptyText);
 
-        contactsList.add(new ChatItem("Alice", "Online", "Now", 0, true));
-        contactsList.add(new ChatItem("Bob", "Last seen 10min ago", "10min", 0, false));
-        contactsList.add(new ChatItem("Charlie", "Online", "Now", 0, true));
-        contactsList.add(new ChatItem("Diana", "Last seen 1 hour ago", "1h", 0, false));
-
-        contactsAdapter = new ChatAdapter(contactsList);
+        contactsAdapter = new ChatAdapter(contactsList, null);
         contactsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         contactsRecyclerView.setAdapter(contactsAdapter);
+
+        loadContacts();
+    }
+
+    private void loadContacts() {
+        new Thread(() -> {
+            try {
+                String result = DirectLinkClient.getContacts();
+                JSONArray contacts = new JSONArray(result);
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    contactsList.clear();
+                    try {
+                        for (int i = 0; i < contacts.length(); i++) {
+                            JSONObject obj = contacts.getJSONObject(i);
+                            String username = obj.getString("username");
+                            String phone = obj.getString("phone_number");
+                            boolean online = obj.optBoolean("online", false);
+                            contactsList.add(new ChatItem(username, phone, "Contact", "Now", 0, online));
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    if (contactsList.isEmpty()) {
+                        emptyText.setVisibility(android.view.View.VISIBLE);
+                        contactsRecyclerView.setVisibility(android.view.View.GONE);
+                    } else {
+                        emptyText.setVisibility(android.view.View.GONE);
+                        contactsRecyclerView.setVisibility(android.view.View.VISIBLE);
+                        contactsAdapter.notifyDataSetChanged();
+                    }
+                });
+            } catch (Exception e) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(this, "Error loading contacts", Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
     }
 }

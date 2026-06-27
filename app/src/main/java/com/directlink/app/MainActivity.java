@@ -19,7 +19,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends BaseActivity {
+public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRequestListener {
 
     private EditText searchInput;
     private EditText serverUrlInput;
@@ -29,6 +29,7 @@ public class MainActivity extends BaseActivity {
     private ChatAdapter chatAdapter;
     private List<ChatItem> chatList = new ArrayList<>();
     private FloatingActionButton fabAddUser;
+    private String currentUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,15 +45,14 @@ public class MainActivity extends BaseActivity {
         chatsRecyclerView = findViewById(R.id.chatsRecyclerView);
         fabAddUser = findViewById(R.id.fabAddUser);
 
-        chatAdapter = new ChatAdapter(chatList);
-        chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        chatsRecyclerView.setAdapter(chatAdapter);
-
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
+        currentUsername = prefs.getString("username", "");
         String savedUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
         serverUrlInput.setText(savedUrl);
 
-        loadSampleChats();
+        chatAdapter = new ChatAdapter(chatList, this);
+        chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        chatsRecyclerView.setAdapter(chatAdapter);
 
         fabAddUser.setOnClickListener(v -> showAddUserDialog());
 
@@ -73,13 +73,11 @@ public class MainActivity extends BaseActivity {
             new Thread(() -> {
                 try {
                     DirectLinkClient.init(serverUrl);
-                    String result = DirectLinkClient.getContacts();
-
+                    loadData();
                     new Handler(Looper.getMainLooper()).post(() -> {
                         statusText.setText("✅ Connected to: " + serverUrl);
                         Toast.makeText(MainActivity.this, "Connected!", Toast.LENGTH_SHORT).show();
                         connectButton.setEnabled(true);
-                        updateChatsFromContacts(result);
                     });
                 } catch (Exception e) {
                     new Handler(Looper.getMainLooper()).post(() -> {
@@ -108,6 +106,106 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    private void loadData() {
+        new Thread(() -> {
+            try {
+                // Load contacts
+                String contactsResult = DirectLinkClient.getContacts();
+                JSONArray contacts = new JSONArray(contactsResult);
+
+                // Load friend requests
+                String requestsResult = DirectLinkClient.getFriendRequests();
+                JSONArray requests = new JSONArray(requestsResult);
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    updateChatList(contacts, requests);
+                });
+            } catch (Exception e) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    statusText.setText("❌ Error loading data: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    private void updateChatList(JSONArray contacts, JSONArray requests) {
+        chatList.clear();
+
+        // Add friend requests first
+        try {
+            for (int i = 0; i < requests.length(); i++) {
+                JSONObject req = requests.getJSONObject(i);
+                String from = req.getString("from_username");
+                String phone = req.getString("from_phone");
+                String requestId = req.getString("id");
+                chatList.add(new ChatItem(from, phone, requestId));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Add chats/contacts
+        try {
+            for (int i = 0; i < contacts.length(); i++) {
+                JSONObject contact = contacts.getJSONObject(i);
+                String username = contact.getString("username");
+                String phone = contact.getString("phone_number");
+                boolean online = contact.optBoolean("online", false);
+                chatList.add(new ChatItem(username, phone, "Tap to chat", "Now", 0, online));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        chatAdapter.notifyDataSetChanged();
+        statusText.setText("📋 " + chatList.size() + " items");
+    }
+
+    // Friend request actions
+    @Override
+    public void onAccept(String requestId, String name, String phone) {
+        new Thread(() -> {
+            try {
+                String result = DirectLinkClient.acceptFriendRequest(requestId);
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(this, "Friend request accepted!", Toast.LENGTH_SHORT).show();
+                    loadData(); // Refresh
+                });
+            } catch (Exception e) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        }).start();
+    }
+
+    @Override
+    public void onReject(String requestId) {
+        new Thread(() -> {
+            try {
+                String result = DirectLinkClient.rejectFriendRequest(requestId);
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(this, "Friend request rejected", Toast.LENGTH_SHORT).show();
+                    loadData(); // Refresh
+                });
+            } catch (Exception e) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        }).start();
+    }
+
+    @Override
+    public void onChatClick(String name, String phone) {
+        Intent intent = new Intent(this, UserProfileActivity.class);
+        intent.putExtra("username", name);
+        intent.putExtra("phone", phone);
+        intent.putExtra("online", true);
+        startActivity(intent);
+    }
+
+    // Add user flow
     private void showAddUserDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("➕ Add New User");
@@ -146,14 +244,14 @@ public class MainActivity extends BaseActivity {
                 Toast.makeText(this, "Please enter a phone number", Toast.LENGTH_SHORT).show();
                 return;
             }
-            checkUserAndShowProfile(phone);
+            checkUserAndAdd(phone);
         });
 
         builder.setNegativeButton("Cancel", null);
         builder.show();
     }
 
-    private void checkUserAndShowProfile(String phone) {
+    private void checkUserAndAdd(String phone) {
         Toast.makeText(this, "🔍 Checking user...", Toast.LENGTH_SHORT).show();
 
         new Thread(() -> {
@@ -161,6 +259,8 @@ public class MainActivity extends BaseActivity {
                 SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
                 String serverUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
                 DirectLinkClient.init(serverUrl);
+
+                // Check if user exists
                 String result = DirectLinkClient.checkUser(phone);
                 JSONObject json = new JSONObject(result);
 
@@ -171,11 +271,8 @@ public class MainActivity extends BaseActivity {
                             String phoneNumber = json.getString("phone_number");
                             boolean online = json.optBoolean("online", false);
 
-                            Intent intent = new Intent(MainActivity.this, UserProfileActivity.class);
-                            intent.putExtra("username", username);
-                            intent.putExtra("phone", phoneNumber);
-                            intent.putExtra("online", online);
-                            startActivity(intent);
+                            // Send friend request
+                            sendFriendRequest(username, phoneNumber);
                         } else {
                             new android.app.AlertDialog.Builder(MainActivity.this)
                                 .setTitle("❌ User Not Found")
@@ -198,53 +295,23 @@ public class MainActivity extends BaseActivity {
         }).start();
     }
 
-    private void loadSampleChats() {
-        chatList.clear();
-        chatList.add(new ChatItem("Ken Kingston", "I understand if you can't assist", "Wed", 0, true));
-        chatList.add(new ChatItem("Jeff Sirois", "okay", "Mon", 0, true));
-        chatList.add(new ChatItem("Raul Loa", "Voice message", "Mon", 0, false));
-        chatList.add(new ChatItem("Jeff", "good morning to you too sweetie", "Sun", 1, true));
-        chatList.add(new ChatItem("Dazza Lee", "You said when i have it", "12 Jun", 0, false));
-        chatList.add(new ChatItem("BUTCH Proper", "hi", "29 May", 0, false));
-        chatList.add(new ChatItem("Bruce", "hi", "22 May", 0, false));
-        chatList.add(new ChatItem("Conny Albert", "Image message", "01 May", 0, false));
-        chatList.add(new ChatItem("David", "you can say what ever you want", "12 Apr", 0, false));
-        chatAdapter.notifyDataSetChanged();
-    }
-
-    private void updateChatsFromContacts(String contactsJson) {
-        try {
-            JSONArray array = new JSONArray(contactsJson);
-            chatList.clear();
-            for (int i = 0; i < array.length(); i++) {
-                JSONObject obj = array.getJSONObject(i);
-                String username = obj.getString("username");
-                boolean online = obj.optBoolean("online", false);
-                chatList.add(new ChatItem(username, "Online" + (online ? " 🟢" : " ⚪"), "Now", 0, online));
+    private void sendFriendRequest(String username, String phone) {
+        new Thread(() -> {
+            try {
+                String result = DirectLinkClient.sendFriendRequest(username);
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(this, "Friend request sent to " + username + "!", Toast.LENGTH_SHORT).show();
+                    loadData(); // Refresh
+                });
+            } catch (Exception e) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
             }
-            if (chatList.isEmpty()) {
-                loadSampleChats();
-            } else {
-                chatAdapter.notifyDataSetChanged();
-                statusText.setText("✅ Loaded " + chatList.size() + " contacts");
-            }
-        } catch (Exception e) {
-            loadSampleChats();
-        }
+        }).start();
     }
 
     private void filterChats(String query) {
-        if (query.isEmpty()) {
-            loadSampleChats();
-        } else {
-            List<ChatItem> filtered = new ArrayList<>();
-            for (ChatItem item : chatList) {
-                if (item.getName().toLowerCase().contains(query.toLowerCase())) {
-                    filtered.add(item);
-                }
-            }
-            chatAdapter = new ChatAdapter(filtered);
-            chatsRecyclerView.setAdapter(chatAdapter);
-        }
+        // TODO: Implement proper search
     }
 }

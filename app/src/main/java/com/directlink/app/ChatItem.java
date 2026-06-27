@@ -1,26 +1,49 @@
 package com.directlink.app;
 
 public class ChatItem {
+    public static final int TYPE_CHAT = 0;
+    public static final int TYPE_FRIEND_REQUEST = 1;
+
+    private int type;  // 0 = chat, 1 = friend request
     private String name;
+    private String phone;
     private String lastMessage;
     private String time;
     private int badgeCount;
     private boolean online;
+    private String requestId;  // For friend requests
 
-    public ChatItem(String name, String lastMessage, String time, int badgeCount, boolean online) {
+    // Chat constructor
+    public ChatItem(String name, String phone, String lastMessage, String time, int badgeCount, boolean online) {
+        this.type = TYPE_CHAT;
         this.name = name;
+        this.phone = phone;
         this.lastMessage = lastMessage;
         this.time = time;
         this.badgeCount = badgeCount;
         this.online = online;
     }
 
+    // Friend request constructor
+    public ChatItem(String name, String phone, String requestId) {
+        this.type = TYPE_FRIEND_REQUEST;
+        this.name = name;
+        this.phone = phone;
+        this.requestId = requestId;
+        this.lastMessage = "📨 Friend request";
+        this.time = "Now";
+        this.badgeCount = 1;
+        this.online = false;
+    }
+
+    public int getType() { return type; }
     public String getName() { return name; }
+    public String getPhone() { return phone; }
     public String getLastMessage() { return lastMessage; }
     public String getTime() { return time; }
     public int getBadgeCount() { return badgeCount; }
     public boolean isOnline() { return online; }
-    public void setOnline(boolean online) { this.online = online; }
+    public String getRequestId() { return requestId; }
 
     public String getAvatarText() {
         if (name == null || name.isEmpty()) return "?";

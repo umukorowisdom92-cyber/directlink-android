@@ -25,14 +25,16 @@
 
     </LinearLayout>
 
-    <EditText
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/emptyText"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/topBar"
-        android:hint="🔍 Search contacts..."
-        android:padding="12dp"
-        android:background="#ffffff"
-        android:layout_margin="8dp" />
+        android:layout_centerInParent="true"
+        android:text="No contacts yet\n\nAdd friends using the + button"
+        android:textSize="16sp"
+        android:textColor="#999999"
+        android:gravity="center"
+        android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/contactsRecyclerView"
@@ -41,9 +43,10 @@
         android:layout_below="@id/topBar"
         android:layout_above="@+id/bottomNav"
         android:background="#ffffff"
-        android:layout_marginTop="56dp" />
+        android:padding="0dp"
+        android:visibility="gone" />
 
-    <!-- Bottom Navigation (from BaseActivity) -->
+    <!-- Bottom Navigation -->
     <include
         android:id="@+id/bottomNav"
         layout="@layout/bottom_nav" />

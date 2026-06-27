@@ -8,15 +8,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
 
 public class DirectLinkClient {
-    // Change this to your server IP!
     private static String serverUrl = "http://10.55.192.27:3030";
     private static String authToken = null;
     private static String username = null;
-    
+
     public static void init(String url) {
         if (url == null || url.isEmpty()) {
             throw new IllegalArgumentException("Server URL cannot be empty");
@@ -28,32 +25,56 @@ public class DirectLinkClient {
         serverUrl = url;
         Log.d("DirectLink", "Server set to: " + serverUrl);
     }
-    
+
     public static String getContacts() throws Exception {
         return sendGetRequest("/contacts");
     }
-    
+
+    public static String getFriendRequests() throws Exception {
+        return sendGetRequest("/friend_requests");
+    }
+
+    public static String sendFriendRequest(String toUsername) throws Exception {
+        JSONObject json = new JSONObject();
+        json.put("to_username", toUsername);
+        return sendPostRequest("/friend_request", json.toString());
+    }
+
+    public static String acceptFriendRequest(String requestId) throws Exception {
+        JSONObject json = new JSONObject();
+        json.put("request_id", requestId);
+        json.put("action", "accept");
+        return sendPostRequest("/friend_request/respond", json.toString());
+    }
+
+    public static String rejectFriendRequest(String requestId) throws Exception {
+        JSONObject json = new JSONObject();
+        json.put("request_id", requestId);
+        json.put("action", "reject");
+        return sendPostRequest("/friend_request/respond", json.toString());
+    }
+
     public static String register(String username, String phone, String password) throws Exception {
         username = username.trim();
         phone = phone.trim();
         password = password.trim();
-        
+
         JSONObject json = new JSONObject();
         json.put("username", username);
         json.put("phone_number", phone);
         json.put("password", password);
         return sendPostRequest("/register", json.toString());
     }
-    
+
     public static String login(String phone, String password) throws Exception {
         phone = phone.trim();
         password = password.trim();
-        
+
         JSONObject json = new JSONObject();
         json.put("phone_number", phone);
         json.put("password", password);
         String response = sendPostRequest("/login", json.toString());
-        
+
         try {
             JSONObject obj = new JSONObject(response);
             if (obj.has("token")) {
@@ -61,30 +82,22 @@ public class DirectLinkClient {
                 username = obj.getString("username");
             }
         } catch (Exception e) {}
-        
+
         return response;
     }
-    
+
     public static String checkUser(String phone) throws Exception {
         phone = phone.trim();
         return sendGetRequest("/check?phone=" + java.net.URLEncoder.encode(phone, "UTF-8"));
     }
-    
-    public static String createGroup(String name, String membersJson) throws Exception {
-        name = name.trim();
-        JSONObject json = new JSONObject();
-        json.put("name", name);
-        json.put("members", new JSONArray(membersJson));
-        return sendPostRequest("/group", json.toString());
-    }
-    
+
     public static void freeString(String ptr) {}
-    
+
     private static String sendPostRequest(String path, String jsonBody) throws Exception {
         if (serverUrl == null || serverUrl.isEmpty()) {
             throw new IllegalStateException("Server URL not set. Call init() first.");
         }
-        
+
         URL url = new URL(serverUrl + path);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
@@ -92,17 +105,17 @@ public class DirectLinkClient {
         conn.setRequestProperty("Accept", "application/json");
         conn.setConnectTimeout(5000);
         conn.setReadTimeout(10000);
-        
+
         if (authToken != null) {
             conn.setRequestProperty("Authorization", "Bearer " + authToken);
         }
-        
+
         conn.setDoOutput(true);
         OutputStream os = conn.getOutputStream();
         os.write(jsonBody.getBytes("UTF-8"));
         os.flush();
         os.close();
-        
+
         int responseCode = conn.getResponseCode();
         if (responseCode >= 400) {
             BufferedReader errorReader = new BufferedReader(
@@ -117,7 +130,7 @@ public class DirectLinkClient {
             conn.disconnect();
             throw new Exception("Server error " + responseCode + ": " + errorResponse.toString());
         }
-        
+
         BufferedReader reader = new BufferedReader(
             new InputStreamReader(conn.getInputStream())
         );
@@ -128,26 +141,26 @@ public class DirectLinkClient {
         }
         reader.close();
         conn.disconnect();
-        
+
         return response.toString();
     }
-    
+
     private static String sendGetRequest(String path) throws Exception {
         if (serverUrl == null || serverUrl.isEmpty()) {
             throw new IllegalStateException("Server URL not set. Call init() first.");
         }
-        
+
         URL url = new URL(serverUrl + path);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
         conn.setRequestProperty("Accept", "application/json");
         conn.setConnectTimeout(5000);
         conn.setReadTimeout(10000);
-        
+
         if (authToken != null) {
             conn.setRequestProperty("Authorization", "Bearer " + authToken);
         }
-        
+
         int responseCode = conn.getResponseCode();
         if (responseCode >= 400) {
             BufferedReader errorReader = new BufferedReader(
@@ -162,7 +175,7 @@ public class DirectLinkClient {
             conn.disconnect();
             throw new Exception("Server error " + responseCode + ": " + errorResponse.toString());
         }
-        
+
         BufferedReader reader = new BufferedReader(
             new InputStreamReader(conn.getInputStream())
         );
@@ -173,7 +186,7 @@ public class DirectLinkClient {
         }
         reader.close();
         conn.disconnect();
-        
+
         return response.toString();
     }
 }
