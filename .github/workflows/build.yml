@@ -31,7 +31,8 @@ jobs:
     - name: Build Rust Library
       run: |
         cd rust
-        cargo ndk -t arm64-v8a build --release
+        cargo ndk -t arm64-v8a -- build --release
+        ls -la target/aarch64-linux-android/release/
     
     - name: Create libs directory
       run: mkdir -p app/libs/arm64-v8a
@@ -39,12 +40,17 @@ jobs:
     - name: Copy Rust library
       run: |
         cp rust/target/aarch64-linux-android/release/*.so app/libs/arm64-v8a/ 2>/dev/null || echo "No .so files found"
+        ls -la app/libs/arm64-v8a/
     
     - name: Make gradlew executable
       run: chmod +x gradlew
     
     - name: Build Debug APK
       run: ./gradlew assembleDebug
+    
+    - name: List APK contents
+      run: |
+        find app/build/outputs -name "*.apk" -exec unzip -l {} \;
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
