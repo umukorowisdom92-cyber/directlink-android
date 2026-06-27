@@ -1,6 +1,5 @@
 package com.directlink.app;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -63,24 +62,25 @@ public class MainActivity extends AppCompatActivity {
 
         loadSampleChats();
 
-        navChats.setOnClickListener(v -> highlightNav(navChats));
-        navContacts.setOnClickListener(v -> highlightNav(navContacts));
-        navCalls.setOnClickListener(v -> highlightNav(navCalls));
+        // Bottom Navigation - Open respective activities
+        navChats.setOnClickListener(v -> {
+            highlightNav(navChats);
+            // Already on chats
+        });
+
+        navContacts.setOnClickListener(v -> {
+            highlightNav(navContacts);
+            startActivity(new Intent(MainActivity.this, ContactsActivity.class));
+        });
+
+        navCalls.setOnClickListener(v -> {
+            highlightNav(navCalls);
+            startActivity(new Intent(MainActivity.this, CallsActivity.class));
+        });
 
         navSettings.setOnClickListener(v -> {
-            new AlertDialog.Builder(this)
-                .setTitle("⚙️ Settings")
-                .setMessage("Logout from your account?")
-                .setPositiveButton("Logout", (dialog, which) -> {
-                    SharedPreferences.Editor editor = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE).edit();
-                    editor.remove("auth_token");
-                    editor.remove("username");
-                    editor.apply();
-                    startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                    finish();
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+            highlightNav(navSettings);
+            startActivity(new Intent(MainActivity.this, SettingsActivity.class));
         });
 
         fabAddUser.setOnClickListener(v -> showAddUserDialog());
@@ -161,15 +161,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showAddUserDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("➕ Add New User");
 
-        // Create layout with options
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 20, 40, 20);
 
-        // QR Code option
         Button qrButton = new Button(this);
         qrButton.setText("📷 Scan QR Code");
         qrButton.setBackgroundColor(0xFF3F51B5);
@@ -180,14 +178,12 @@ public class MainActivity extends AppCompatActivity {
         });
         layout.addView(qrButton);
 
-        // Divider
         TextView divider = new TextView(this);
         divider.setText("────────── OR ──────────");
         divider.setGravity(android.view.Gravity.CENTER);
         divider.setPadding(0, 20, 0, 20);
         layout.addView(divider);
 
-        // Phone number input
         final EditText phoneInput = new EditText(this);
         phoneInput.setHint("📞 Enter phone number");
         phoneInput.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
@@ -202,8 +198,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Please enter a phone number", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            // Check if user exists
             checkUserAndShowProfile(phone);
         });
 
@@ -229,15 +223,13 @@ public class MainActivity extends AppCompatActivity {
                             String phoneNumber = json.getString("phone_number");
                             boolean online = json.optBoolean("online", false);
 
-                            // Show user profile
                             Intent intent = new Intent(MainActivity.this, UserProfileActivity.class);
                             intent.putExtra("username", username);
                             intent.putExtra("phone", phoneNumber);
                             intent.putExtra("online", online);
                             startActivity(intent);
                         } else {
-                            // User not found
-                            new AlertDialog.Builder(MainActivity.this)
+                            new android.app.AlertDialog.Builder(MainActivity.this)
                                 .setTitle("❌ User Not Found")
                                 .setMessage("No user found with phone number: " + phone + "\n\nWould you like to invite them to join DirectLink?")
                                 .setPositiveButton("Invite", (dialog, which) -> {

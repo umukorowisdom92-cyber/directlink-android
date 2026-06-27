@@ -20,7 +20,8 @@
             android:textSize="20sp"
             android:textColor="#FFFFFF"
             android:background="@drawable/avatar_bg"
-            android:padding="8dp" />
+            android:padding="8dp"
+            android:includeFontPadding="false" />
 
         <!-- Online/Offline Dot -->
         <View
@@ -36,7 +37,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:gravity="center_vertical">
 
         <TextView
             android:id="@+id/chatName"

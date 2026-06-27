@@ -38,5 +38,20 @@
             android:exported="false"
             android:label="User Profile" />
 
+        <activity
+            android:name=".ContactsActivity"
+            android:exported="false"
+            android:label="Contacts" />
+
+        <activity
+            android:name=".CallsActivity"
+            android:exported="false"
+            android:label="Calls" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="Settings" />
+
     </application>
 </manifest>
