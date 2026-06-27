@@ -10,8 +10,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class DirectLinkClient {
-    // Cloudflare Tunnel URL
-    private static String serverUrl = "https://movement-gnu-reaching-rail.trycloudflare.com";
+    // PERMANENT URL - NEVER CHANGES!
+    private static String serverUrl = "http://mydirectlink.duckdns.org:3030";
     private static String authToken = null;
     private static String username = null;
 
