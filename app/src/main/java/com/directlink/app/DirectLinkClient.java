@@ -11,7 +11,7 @@ import java.net.URL;
 
 public class DirectLinkClient {
     // PERMANENT URL - NEVER CHANGES!
-    private static String serverUrl = "http://mydirectlink.duckdns.org:3030";
+    private static String serverUrl = "https://d1f43ae8b85f126e-102-90-116-143.serveousercontent.com";
     private static String authToken = null;
     private static String username = null;
 
