@@ -32,7 +32,7 @@ public class RegisterActivity extends AppCompatActivity {
         goToLogin = findViewById(R.id.goToLogin);
 
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
-        String serverUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
+        String serverUrl = prefs.getString("server_url", "https://plains-fun-alice-educational.trycloudflare.com");
         
         // Set the server URL in the client
         DirectLinkClient.init(serverUrl);

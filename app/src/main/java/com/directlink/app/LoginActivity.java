@@ -31,7 +31,7 @@ public class LoginActivity extends AppCompatActivity {
         goToRegister = findViewById(R.id.goToRegister);
 
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
-        String serverUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
+        String serverUrl = prefs.getString("server_url", "https://plains-fun-alice-educational.trycloudflare.com");
 
         goToRegister.setOnClickListener(v -> {
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));

@@ -47,7 +47,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         authToken = prefs.getString("auth_token", "");
-        String savedUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
+        String savedUrl = prefs.getString("server_url", "https://plains-fun-alice-educational.trycloudflare.com");
         String username = prefs.getString("username", "User");
         serverUrlInput.setText(savedUrl);
 
@@ -257,7 +257,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         new Thread(() -> {
             try {
                 SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
-                String serverUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
+                String serverUrl = prefs.getString("server_url", "https://plains-fun-alice-educational.trycloudflare.com");
                 DirectLinkClient.init(serverUrl);
                 DirectLinkClient.setAuthToken(authToken);
 

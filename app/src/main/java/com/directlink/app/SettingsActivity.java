@@ -27,7 +27,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         String username = prefs.getString("username", "User");
-        String serverUrl = prefs.getString("server_url", "http://10.55.192.27:3030");
+        String serverUrl = prefs.getString("server_url", "https://plains-fun-alice-educational.trycloudflare.com");
 
         usernameText.setText("👤 " + username);
         serverUrlText.setText("🌐 Server: " + serverUrl);
