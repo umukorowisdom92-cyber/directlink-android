@@ -30,6 +30,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private List<ChatItem> chatList = new ArrayList<>();
     private FloatingActionButton fabAddUser;
     private String authToken;
+    private String currentUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,12 +48,12 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         authToken = prefs.getString("auth_token", "");
+        currentUsername = prefs.getString("username", "");
         String savedUrl = prefs.getString("server_url", "https://plains-fun-alice-educational.trycloudflare.com");
-        String username = prefs.getString("username", "User");
         serverUrlInput.setText(savedUrl);
 
-        // Set auth token in client
         DirectLinkClient.setAuthToken(authToken);
+        DirectLinkClient.setUsername(currentUsername);
 
         chatAdapter = new ChatAdapter(chatList, this);
         chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -78,6 +79,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 try {
                     DirectLinkClient.init(serverUrl);
                     DirectLinkClient.setAuthToken(authToken);
+                    DirectLinkClient.setUsername(currentUsername);
                     loadData();
                     new Handler(Looper.getMainLooper()).post(() -> {
                         statusText.setText("✅ Connected to: " + serverUrl);
@@ -164,11 +166,13 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         statusText.setText("📋 " + chatList.size() + " items");
     }
 
+    // Accept friend request
     @Override
     public void onAccept(String requestId, String name, String phone) {
         new Thread(() -> {
             try {
                 DirectLinkClient.setAuthToken(authToken);
+                DirectLinkClient.setUsername(currentUsername);
                 String result = DirectLinkClient.acceptFriendRequest(requestId);
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Toast.makeText(this, "Friend request accepted!", Toast.LENGTH_SHORT).show();
@@ -182,11 +186,13 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         }).start();
     }
 
+    // Reject friend request
     @Override
-    public void onReject(String requestId) {
+    public void onReject(String requestId, String name, String phone) {
         new Thread(() -> {
             try {
                 DirectLinkClient.setAuthToken(authToken);
+                DirectLinkClient.setUsername(currentUsername);
                 String result = DirectLinkClient.rejectFriendRequest(requestId);
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Toast.makeText(this, "Friend request rejected", Toast.LENGTH_SHORT).show();
@@ -213,22 +219,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
         layout.setOrientation(android.widget.LinearLayout.VERTICAL);
         layout.setPadding(40, 20, 40, 20);
-
-        android.widget.Button qrButton = new android.widget.Button(this);
-        qrButton.setText("📷 Scan QR Code");
-        qrButton.setBackgroundColor(0xFF3F51B5);
-        qrButton.setTextColor(0xFFFFFFFF);
-        qrButton.setPadding(20, 20, 20, 20);
-        qrButton.setOnClickListener(v -> {
-            Toast.makeText(this, "📷 QR Code Scanner (Coming soon)", Toast.LENGTH_SHORT).show();
-        });
-        layout.addView(qrButton);
-
-        android.widget.TextView divider = new android.widget.TextView(this);
-        divider.setText("────────── OR ──────────");
-        divider.setGravity(android.view.Gravity.CENTER);
-        divider.setPadding(0, 20, 0, 20);
-        layout.addView(divider);
 
         final EditText phoneInput = new EditText(this);
         phoneInput.setHint("📞 Enter phone number");
@@ -260,6 +250,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 String serverUrl = prefs.getString("server_url", "https://plains-fun-alice-educational.trycloudflare.com");
                 DirectLinkClient.init(serverUrl);
                 DirectLinkClient.setAuthToken(authToken);
+                DirectLinkClient.setUsername(currentUsername);
 
                 String result = DirectLinkClient.checkUser(phone);
                 JSONObject json = new JSONObject(result);
@@ -293,6 +284,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         new Thread(() -> {
             try {
                 DirectLinkClient.setAuthToken(authToken);
+                DirectLinkClient.setUsername(currentUsername);
                 String result = DirectLinkClient.sendFriendRequest(username);
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Toast.makeText(this, "Friend request sent to " + username + "!", Toast.LENGTH_SHORT).show();
@@ -306,5 +298,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         }).start();
     }
 
-    private void filterChats(String query) {}
+    private void filterChats(String query) {
+        // TODO: Implement proper search
+    }
 }

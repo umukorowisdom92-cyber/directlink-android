@@ -35,15 +35,10 @@ public class DirectLinkClient {
     }
 
     public static String getContacts() throws Exception {
-        // Use the stored username
         if (username == null || username.isEmpty()) {
             throw new Exception("Username not set. Please login first.");
         }
         return sendGetRequest("/contacts?username=" + username);
-    }
-
-    public static String getContactsFor(String user) throws Exception {
-        return sendGetRequest("/contacts?username=" + user);
     }
 
     public static String getFriendRequests() throws Exception {

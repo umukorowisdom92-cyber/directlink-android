@@ -15,7 +15,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public interface OnFriendRequestListener {
         void onAccept(String requestId, String name, String phone);
-        void onReject(String requestId);
+        void onReject(String requestId, String name, String phone);
         void onChatClick(String name, String phone);
     }
 
@@ -61,7 +61,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             frHolder.rejectButton.setOnClickListener(v -> {
                 if (requestListener != null) {
-                    requestListener.onReject(chat.getRequestId());
+                    requestListener.onReject(chat.getRequestId(), chat.getName(), chat.getPhone());
                 }
             });
         } else {
