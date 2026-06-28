@@ -32,6 +32,7 @@ public class DirectLinkClient {
 
     public static void setUsername(String name) {
         username = name;
+        Log.d("DirectLink", "Username set to: " + username);
     }
 
     public static String getContacts() throws Exception {
@@ -64,6 +65,7 @@ public class DirectLinkClient {
         JSONObject json = new JSONObject();
         json.put("request_id", requestId);
         json.put("action", "accept");
+        json.put("username", username);  // Send username in body too
         return sendPostRequest("/friend_request/respond?username=" + username, json.toString());
     }
 
@@ -74,6 +76,7 @@ public class DirectLinkClient {
         JSONObject json = new JSONObject();
         json.put("request_id", requestId);
         json.put("action", "reject");
+        json.put("username", username);  // Send username in body too
         return sendPostRequest("/friend_request/respond?username=" + username, json.toString());
     }
 
@@ -122,7 +125,10 @@ public class DirectLinkClient {
             throw new IllegalStateException("Server URL not set. Call init() first.");
         }
 
-        URL url = new URL(serverUrl + path);
+        String fullUrl = serverUrl + path;
+        Log.d("DirectLink", "POST: " + fullUrl);
+        
+        URL url = new URL(fullUrl);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
         conn.setRequestProperty("Content-Type", "application/json");
@@ -174,7 +180,10 @@ public class DirectLinkClient {
             throw new IllegalStateException("Server URL not set. Call init() first.");
         }
 
-        URL url = new URL(serverUrl + path);
+        String fullUrl = serverUrl + path;
+        Log.d("DirectLink", "GET: " + fullUrl);
+        
+        URL url = new URL(fullUrl);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
         conn.setRequestProperty("Accept", "application/json");
