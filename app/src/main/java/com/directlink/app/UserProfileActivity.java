@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class UserProfileActivity extends AppCompatActivity {
 
     private TextView profileName, profilePhone, profileStatus;
-    private Button chatButton, callButton;
+    private Button chatButton, callButton, backButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,17 +26,20 @@ public class UserProfileActivity extends AppCompatActivity {
         profileStatus = findViewById(R.id.profileStatus);
         chatButton = findViewById(R.id.chatButton);
         callButton = findViewById(R.id.callButton);
+        backButton = findViewById(R.id.backButton);
 
         profileName.setText(username);
         profilePhone.setText(phone);
         profileStatus.setText(online ? "🟢 Online" : "⚪ Offline");
 
+        backButton.setOnClickListener(v -> finish());
+
         chatButton.setOnClickListener(v -> {
-            Toast.makeText(this, "Chat with " + username, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "💬 Chat with " + username, Toast.LENGTH_SHORT).show();
         });
 
         callButton.setOnClickListener(v -> {
-            Toast.makeText(this, "Call " + username, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "📞 Call " + username, Toast.LENGTH_SHORT).show();
         });
     }
 }

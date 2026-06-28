@@ -31,15 +31,13 @@ public class ContactsActivity extends BaseActivity {
         contactsRecyclerView = findViewById(R.id.contactsRecyclerView);
         emptyText = findViewById(R.id.emptyText);
 
-        // Custom adapter for contacts with click listener
         contactsAdapter = new ChatAdapter(contactsList, new ChatAdapter.OnFriendRequestListener() {
             @Override
             public void onAccept(String requestId, String name, String phone) {}
             @Override
-            public void onReject(String requestId) {}
+            public void onReject(String requestId, String name, String phone) {}
             @Override
             public void onChatClick(String name, String phone) {
-                // In contacts, click opens profile
                 Intent intent = new Intent(ContactsActivity.this, UserProfileActivity.class);
                 intent.putExtra("username", name);
                 intent.putExtra("phone", phone);
