@@ -10,7 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class DirectLinkClient {
-    private static String serverUrl = "https://plains-fun-alice-educational.trycloudflare.com";
+    private static String serverUrl = "https://d244564866f8662d-102-90-116-143.serveousercontent.com";
     private static String authToken = null;
     private static String username = null;
 
