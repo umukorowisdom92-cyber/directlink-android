@@ -10,7 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class DirectLinkClient {
-    // PERMANENT URL - NEVER CHANGES!
+    // CLOUDFLARE TUNNEL URL - WORKING!
     private static String serverUrl = "https://plains-fun-alice-educational.trycloudflare.com";
     private static String authToken = null;
     private static String username = null;
