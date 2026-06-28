@@ -10,7 +10,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class DirectLinkClient {
-    // CLOUDFLARE TUNNEL URL - WORKING!
     private static String serverUrl = "https://plains-fun-alice-educational.trycloudflare.com";
     private static String authToken = null;
     private static String username = null;
@@ -31,32 +30,56 @@ public class DirectLinkClient {
         authToken = token;
     }
 
+    public static void setUsername(String name) {
+        username = name;
+    }
+
     public static String getContacts() throws Exception {
-        return sendGetRequest("/contacts");
+        // Use the stored username
+        if (username == null || username.isEmpty()) {
+            throw new Exception("Username not set. Please login first.");
+        }
+        return sendGetRequest("/contacts?username=" + username);
+    }
+
+    public static String getContactsFor(String user) throws Exception {
+        return sendGetRequest("/contacts?username=" + user);
     }
 
     public static String getFriendRequests() throws Exception {
-        return sendGetRequest("/friend_requests");
+        if (username == null || username.isEmpty()) {
+            throw new Exception("Username not set. Please login first.");
+        }
+        return sendGetRequest("/friend_requests?username=" + username);
     }
 
     public static String sendFriendRequest(String toUsername) throws Exception {
+        if (username == null || username.isEmpty()) {
+            throw new Exception("Username not set. Please login first.");
+        }
         JSONObject json = new JSONObject();
         json.put("to_username", toUsername);
-        return sendPostRequest("/friend_request", json.toString());
+        return sendPostRequest("/friend_request?from=" + username, json.toString());
     }
 
     public static String acceptFriendRequest(String requestId) throws Exception {
+        if (username == null || username.isEmpty()) {
+            throw new Exception("Username not set. Please login first.");
+        }
         JSONObject json = new JSONObject();
         json.put("request_id", requestId);
         json.put("action", "accept");
-        return sendPostRequest("/friend_request/respond", json.toString());
+        return sendPostRequest("/friend_request/respond?username=" + username, json.toString());
     }
 
     public static String rejectFriendRequest(String requestId) throws Exception {
+        if (username == null || username.isEmpty()) {
+            throw new Exception("Username not set. Please login first.");
+        }
         JSONObject json = new JSONObject();
         json.put("request_id", requestId);
         json.put("action", "reject");
-        return sendPostRequest("/friend_request/respond", json.toString());
+        return sendPostRequest("/friend_request/respond?username=" + username, json.toString());
     }
 
     public static String register(String username, String phone, String password) throws Exception {
@@ -85,7 +108,7 @@ public class DirectLinkClient {
             if (obj.has("token")) {
                 authToken = obj.getString("token");
                 username = obj.getString("username");
-                Log.d("DirectLink", "Auth token set: " + authToken);
+                Log.d("DirectLink", "Logged in as: " + username);
             }
         } catch (Exception e) {}
 
