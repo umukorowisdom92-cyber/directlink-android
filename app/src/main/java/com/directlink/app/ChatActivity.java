@@ -11,15 +11,16 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import org.json.JSONObject;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import org.json.JSONObject;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -186,7 +187,6 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void displayMessage(String sender, String message, String timestamp) {
-        // Create message view
         TextView messageView = new TextView(this);
         String displayText = sender + ": " + message;
         if (!timestamp.isEmpty() && !timestamp.equals("now")) {
@@ -211,7 +211,6 @@ public class ChatActivity extends AppCompatActivity {
             messageView.setGravity(android.view.Gravity.START);
         }
 
-        // Add padding and margin
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) messageView.getLayoutParams();
         params.setMargins(0, 4, 0, 4);
         messageView.setLayoutParams(params);
