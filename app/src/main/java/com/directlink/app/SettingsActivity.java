@@ -27,7 +27,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         String username = prefs.getString("username", "User");
-        String serverUrl = prefs.getString("server_url", "https://plains-fun-alice-educational.trycloudflare.com");
+        String serverUrl = prefs.getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
 
         usernameText.setText("👤 " + username);
         serverUrlText.setText("🌐 Server: " + serverUrl);

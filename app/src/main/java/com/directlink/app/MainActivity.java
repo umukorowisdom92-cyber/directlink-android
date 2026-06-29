@@ -49,7 +49,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         authToken = prefs.getString("auth_token", "");
         currentUsername = prefs.getString("username", "");
-        String savedUrl = prefs.getString("server_url", "https://plains-fun-alice-educational.trycloudflare.com");
+        String savedUrl = prefs.getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
         serverUrlInput.setText(savedUrl);
 
         DirectLinkClient.setAuthToken(authToken);
@@ -247,7 +247,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         new Thread(() -> {
             try {
                 SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
-                String serverUrl = prefs.getString("server_url", "https://plains-fun-alice-educational.trycloudflare.com");
+                String serverUrl = prefs.getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
                 DirectLinkClient.init(serverUrl);
                 DirectLinkClient.setAuthToken(authToken);
                 DirectLinkClient.setUsername(currentUsername);
