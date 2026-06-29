@@ -55,3 +55,8 @@
 
     </application>
 </manifest>
+        <activity
+            android:name=".ChatActivity"
+            android:exported="false"
+            android:label="Chat"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar" />
