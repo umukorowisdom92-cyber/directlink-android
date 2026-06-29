@@ -4,14 +4,14 @@ public class ChatItem {
     public static final int TYPE_CHAT = 0;
     public static final int TYPE_FRIEND_REQUEST = 1;
 
-    private int type;  // 0 = chat, 1 = friend request
+    private int type;
     private String name;
     private String phone;
     private String lastMessage;
     private String time;
     private int badgeCount;
     private boolean online;
-    private String requestId;  // For friend requests
+    private String requestId;
 
     // Chat constructor
     public ChatItem(String name, String phone, String lastMessage, String time, int badgeCount, boolean online) {
@@ -40,8 +40,12 @@ public class ChatItem {
     public String getName() { return name; }
     public String getPhone() { return phone; }
     public String getLastMessage() { return lastMessage; }
+    public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }
     public String getTime() { return time; }
+    public void setTime(String time) { this.time = time; }
     public int getBadgeCount() { return badgeCount; }
+    public void setBadgeCount(int badgeCount) { this.badgeCount = badgeCount; }
+    public void incrementBadge() { this.badgeCount++; }
     public boolean isOnline() { return online; }
     public String getRequestId() { return requestId; }
 

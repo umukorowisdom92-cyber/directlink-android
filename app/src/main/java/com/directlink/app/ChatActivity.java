@@ -36,6 +36,7 @@ public class ChatActivity extends AppCompatActivity {
     private String chatPartner;
     private String serverUrl;
     private MessageDatabase messageDatabase;
+    private NotificationManager notificationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +58,7 @@ public class ChatActivity extends AppCompatActivity {
         setTitle("Chat with " + chatPartner);
 
         messageDatabase = new MessageDatabase(this);
+        notificationManager = NotificationManager.getInstance();
 
         messageInput = findViewById(R.id.messageInput);
         sendButton = findViewById(R.id.sendButton);
@@ -64,9 +66,7 @@ public class ChatActivity extends AppCompatActivity {
         scrollView = findViewById(R.id.scrollView);
         statusText = findViewById(R.id.statusText);
 
-        // Load saved messages for this user and chat partner
         loadSavedMessages();
-
         connectWebSocket();
 
         sendButton.setOnClickListener(v -> {
@@ -136,9 +136,15 @@ public class ChatActivity extends AppCompatActivity {
                             String timestamp = json.optString("timestamp", getCurrentTimestamp());
 
                             String sender = from.equals(currentUsername) ? "Me" : from;
-                            // Save with current user
+                            
+                            // Save message locally
                             messageDatabase.saveMessage(currentUsername, chatPartner, sender, content, timestamp);
                             displayMessage(sender, content, timestamp);
+                            
+                            // Notify MainActivity for notification badge
+                            if (!sender.equals("Me")) {
+                                notificationManager.onMessageReceived(sender, content, timestamp);
+                            }
                         } else if ("online_status".equals(type)) {
                             String username = json.getString("username");
                             boolean online = json.getBoolean("online");

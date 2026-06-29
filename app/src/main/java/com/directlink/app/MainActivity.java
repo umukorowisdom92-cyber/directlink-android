@@ -31,6 +31,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private FloatingActionButton fabAddUser;
     private String authToken;
     private String currentUsername;
+    private NotificationManager notificationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +53,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         String savedUrl = prefs.getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
         serverUrlInput.setText(savedUrl);
 
-        // Check if user is logged in
         if (authToken.isEmpty() || currentUsername.isEmpty()) {
             startActivity(new Intent(MainActivity.this, LoginActivity.class));
             finish();
@@ -61,6 +61,10 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
         DirectLinkClient.setAuthToken(authToken);
         DirectLinkClient.setUsername(currentUsername);
+
+        // Initialize notification manager
+        notificationManager = NotificationManager.getInstance();
+        notificationManager.setMainActivity(this);
 
         chatAdapter = new ChatAdapter(chatList, this);
         chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -120,11 +124,30 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        // Do nothing - prevent logout on back press
-        // User must use the logout button in Settings
-        moveTaskToBack(true);
+    public void updateChatListOnNewMessage(String sender, String message, String timestamp) {
+        runOnUiThread(() -> {
+            boolean found = false;
+            for (ChatItem item : chatList) {
+                if (item.getName().equals(sender)) {
+                    item.setLastMessage(message);
+                    item.setTime(timestamp);
+                    item.incrementBadge();
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                // Add new chat item if not exists
+                chatList.add(new ChatItem(sender, "", message, timestamp, 1, false));
+            }
+            chatAdapter.notifyDataSetChanged();
+        });
+    }
+
+    public void refreshChatList() {
+        runOnUiThread(() -> {
+            chatAdapter.notifyDataSetChanged();
+        });
     }
 
     private void loadData() {
@@ -150,6 +173,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private void updateChatList(JSONArray contacts, JSONArray requests) {
         chatList.clear();
 
+        // Friend requests
         try {
             for (int i = 0; i < requests.length(); i++) {
                 JSONObject req = requests.getJSONObject(i);
@@ -162,13 +186,20 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
             e.printStackTrace();
         }
 
+        // Contacts with notification data
         try {
             for (int i = 0; i < contacts.length(); i++) {
                 JSONObject contact = contacts.getJSONObject(i);
                 String username = contact.getString("username");
                 String phone = contact.getString("phone_number");
                 boolean online = contact.optBoolean("online", false);
-                chatList.add(new ChatItem(username, phone, "Tap to chat", "Now", 0, online));
+                
+                // Check if there's a notification for this contact
+                int badgeCount = notificationManager.getUnreadCount(username);
+                String lastMessage = notificationManager.getLastMessage(username);
+                String lastTime = notificationManager.getLastTimestamp(username);
+                
+                chatList.add(new ChatItem(username, phone, lastMessage, lastTime, badgeCount, online));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -188,6 +219,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 String result = DirectLinkClient.acceptFriendRequest(requestId);
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Toast.makeText(this, "Friend request accepted!", Toast.LENGTH_SHORT).show();
+                    notificationManager.clearUnread(name);
                     loadData();
                 });
             } catch (Exception e) {
@@ -220,10 +252,17 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
     @Override
     public void onChatClick(String name, String phone) {
+        // Clear unread count when opening chat
+        notificationManager.clearUnread(name);
         Intent intent = new Intent(MainActivity.this, ChatActivity.class);
         intent.putExtra("username", name);
         intent.putExtra("phone", phone);
         startActivity(intent);
+    }
+
+    @Override
+    public void onBackPressed() {
+        moveTaskToBack(true);
     }
 
     private void showAddUserDialog() {
