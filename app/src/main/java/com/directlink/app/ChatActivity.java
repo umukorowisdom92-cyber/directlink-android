@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import okhttp3.OkHttpClient;
@@ -34,6 +35,7 @@ public class ChatActivity extends AppCompatActivity {
     private String currentUsername;
     private String chatPartner;
     private String serverUrl;
+    private MessageDatabase messageDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,12 +57,18 @@ public class ChatActivity extends AppCompatActivity {
 
         setTitle("Chat with " + chatPartner);
 
+        // Initialize database
+        messageDatabase = new MessageDatabase(this);
+
         // Initialize views
         messageInput = findViewById(R.id.messageInput);
         sendButton = findViewById(R.id.sendButton);
         messagesContainer = findViewById(R.id.messagesContainer);
         scrollView = findViewById(R.id.scrollView);
         statusText = findViewById(R.id.statusText);
+
+        // Load saved messages
+        loadSavedMessages();
 
         // Connect to WebSocket
         connectWebSocket();
@@ -83,12 +91,20 @@ public class ChatActivity extends AppCompatActivity {
             return false;
         });
 
-        // Add welcome message
         addSystemMessage("Started chatting with " + chatPartner);
     }
 
+    private void loadSavedMessages() {
+        List<MessageDatabase.MessageItem> savedMessages = messageDatabase.getMessages(chatPartner);
+        for (MessageDatabase.MessageItem item : savedMessages) {
+            displayMessage(item.sender, item.message, item.timestamp);
+        }
+        if (!savedMessages.isEmpty()) {
+            addSystemMessage("Loaded " + savedMessages.size() + " previous messages");
+        }
+    }
+
     private void connectWebSocket() {
-        // Convert https to wss
         String wsUrl = serverUrl.replace("https://", "wss://").replace("http://", "ws://");
         String fullUrl = wsUrl + "/ws?username=" + currentUsername;
 
@@ -123,8 +139,13 @@ public class ChatActivity extends AppCompatActivity {
                         if ("private_message".equals(type)) {
                             String from = json.getString("from");
                             String content = json.getString("content");
-                            String timestamp = json.optString("timestamp", "");
-                            displayMessage(from, content, timestamp);
+                            String timestamp = json.optString("timestamp", getCurrentTimestamp());
+
+                            // Save message to database
+                            String sender = from.equals(currentUsername) ? "Me" : from;
+                            messageDatabase.saveMessage(chatPartner, sender, content, timestamp);
+
+                            displayMessage(sender, content, timestamp);
                         } else if ("online_status".equals(type)) {
                             String username = json.getString("username");
                             boolean online = json.getBoolean("online");
@@ -169,15 +190,20 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         try {
+            String timestamp = getCurrentTimestamp();
+
             JSONObject json = new JSONObject();
             json.put("type", "private_message");
             json.put("from", currentUsername);
             json.put("to", chatPartner);
             json.put("content", message);
-            json.put("timestamp", getCurrentTimestamp());
+            json.put("timestamp", timestamp);
 
             webSocket.send(json.toString());
             messageInput.setText("");
+
+            // Save outgoing message
+            messageDatabase.saveMessage(chatPartner, "Me", message, timestamp);
             displayMessage("Me", message, "now");
             addSystemMessage("Message sent");
         } catch (Exception e) {
