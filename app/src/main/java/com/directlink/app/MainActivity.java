@@ -59,6 +59,9 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         chatsRecyclerView.setAdapter(chatAdapter);
 
+        // Set MainActivity reference in NotificationManager
+        com.directlink.app.NotificationManager.getInstance().setMainActivity(this);
+
         fabAddUser.setOnClickListener(v -> showAddUserDialog());
 
         connectButton.setOnClickListener(v -> {
@@ -162,7 +165,49 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
         chatAdapter.notifyDataSetChanged();
         statusText.setText("📋 " + chatList.size() + " items");
+        
+        // Update unread badge
+        updateUnreadBadge();
     }
+
+    // ============================================================
+    // METHODS CALLED BY NotificationManager
+    // ============================================================
+
+    public void updateChatListOnNewMessage(String sender, String message, String timestamp) {
+        boolean found = false;
+        for (ChatItem item : chatList) {
+            if (item.getName().equals(sender)) {
+                item.setLastMessage(message);
+                item.setTime(timestamp);
+                item.setBadgeCount(item.getBadgeCount() + 1);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            chatList.add(new ChatItem(sender, "", message, timestamp, 1, false));
+        }
+        chatAdapter.notifyDataSetChanged();
+        updateUnreadBadge();
+    }
+
+    public void updateUnreadBadge() {
+        int totalUnread = 0;
+        for (ChatItem item : chatList) {
+            totalUnread += item.getBadgeCount();
+        }
+        // Update the badge in the parent (BaseActivity)
+        // The badge is handled in BaseActivity
+    }
+
+    public void refreshChatList() {
+        loadData();
+    }
+
+    // ============================================================
+    // CHAT ADAPTER LISTENERS
+    // ============================================================
 
     @Override
     public void onAccept(String requestId, String name, String phone) {
@@ -214,13 +259,17 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 break;
             }
         }
+        updateUnreadBadge();
 
-        // Open chat activity
         Intent intent = new Intent(MainActivity.this, ChatActivity.class);
         intent.putExtra("username", name);
         intent.putExtra("phone", phone);
         startActivity(intent);
     }
+
+    // ============================================================
+    // ADD USER
+    // ============================================================
 
     private void showAddUserDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
