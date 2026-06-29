@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 import okhttp3.OkHttpClient;
@@ -35,8 +34,6 @@ public class ChatActivity extends AppCompatActivity {
     private String currentUsername;
     private String chatPartner;
     private String serverUrl;
-    private MessageDatabase messageDatabase;
-    private NotificationManager notificationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,16 +46,13 @@ public class ChatActivity extends AppCompatActivity {
         serverUrl = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE)
                 .getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
 
-        if (chatPartner == null || chatPartner.isEmpty() || currentUsername == null || currentUsername.isEmpty()) {
-            Toast.makeText(this, "Error: Not logged in", Toast.LENGTH_SHORT).show();
+        if (chatPartner == null || chatPartner.isEmpty()) {
+            Toast.makeText(this, "Error: No chat partner", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
         setTitle("Chat with " + chatPartner);
-
-        messageDatabase = new MessageDatabase(this);
-        notificationManager = NotificationManager.getInstance();
 
         messageInput = findViewById(R.id.messageInput);
         sendButton = findViewById(R.id.sendButton);
@@ -66,7 +60,6 @@ public class ChatActivity extends AppCompatActivity {
         scrollView = findViewById(R.id.scrollView);
         statusText = findViewById(R.id.statusText);
 
-        loadSavedMessages();
         connectWebSocket();
 
         sendButton.setOnClickListener(v -> {
@@ -86,16 +79,6 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         addSystemMessage("Started chatting with " + chatPartner);
-    }
-
-    private void loadSavedMessages() {
-        List<MessageDatabase.MessageItem> savedMessages = messageDatabase.getMessages(currentUsername, chatPartner);
-        for (MessageDatabase.MessageItem item : savedMessages) {
-            displayMessage(item.sender, item.message, item.timestamp);
-        }
-        if (!savedMessages.isEmpty()) {
-            addSystemMessage("Loaded " + savedMessages.size() + " previous messages");
-        }
     }
 
     private void connectWebSocket() {
@@ -133,18 +116,8 @@ public class ChatActivity extends AppCompatActivity {
                         if ("private_message".equals(type)) {
                             String from = json.getString("from");
                             String content = json.getString("content");
-                            String timestamp = json.optString("timestamp", getCurrentTimestamp());
-
-                            String sender = from.equals(currentUsername) ? "Me" : from;
-                            
-                            // Save message locally
-                            messageDatabase.saveMessage(currentUsername, chatPartner, sender, content, timestamp);
-                            displayMessage(sender, content, timestamp);
-                            
-                            // Notify MainActivity for notification badge
-                            if (!sender.equals("Me")) {
-                                notificationManager.onMessageReceived(sender, content, timestamp);
-                            }
+                            String timestamp = json.optString("timestamp", "");
+                            displayMessage(from, content, timestamp);
                         } else if ("online_status".equals(type)) {
                             String username = json.getString("username");
                             boolean online = json.getBoolean("online");
@@ -189,21 +162,16 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         try {
-            String timestamp = getCurrentTimestamp();
-
             JSONObject json = new JSONObject();
             json.put("type", "private_message");
             json.put("from", currentUsername);
             json.put("to", chatPartner);
             json.put("content", message);
-            json.put("timestamp", timestamp);
+            json.put("timestamp", getCurrentTimestamp());
 
             webSocket.send(json.toString());
             messageInput.setText("");
-
-            messageDatabase.saveMessage(currentUsername, chatPartner, "Me", message, timestamp);
             displayMessage("Me", message, "now");
-            addSystemMessage("Message sent");
         } catch (Exception e) {
             Toast.makeText(this, "Error sending message", Toast.LENGTH_SHORT).show();
             e.printStackTrace();

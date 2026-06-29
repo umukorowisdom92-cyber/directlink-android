@@ -13,7 +13,6 @@ public class ChatItem {
     private boolean online;
     private String requestId;
 
-    // Chat constructor
     public ChatItem(String name, String phone, String lastMessage, String time, int badgeCount, boolean online) {
         this.type = TYPE_CHAT;
         this.name = name;
@@ -24,7 +23,6 @@ public class ChatItem {
         this.online = online;
     }
 
-    // Friend request constructor
     public ChatItem(String name, String phone, String requestId) {
         this.type = TYPE_FRIEND_REQUEST;
         this.name = name;
@@ -40,14 +38,15 @@ public class ChatItem {
     public String getName() { return name; }
     public String getPhone() { return phone; }
     public String getLastMessage() { return lastMessage; }
-    public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }
     public String getTime() { return time; }
-    public void setTime(String time) { this.time = time; }
     public int getBadgeCount() { return badgeCount; }
-    public void setBadgeCount(int badgeCount) { this.badgeCount = badgeCount; }
-    public void incrementBadge() { this.badgeCount++; }
     public boolean isOnline() { return online; }
     public String getRequestId() { return requestId; }
+
+    public void setBadgeCount(int badgeCount) { this.badgeCount = badgeCount; }
+    public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }
+    public void setTime(String time) { this.time = time; }
+    public void setOnline(boolean online) { this.online = online; }
 
     public String getAvatarText() {
         if (name == null || name.isEmpty()) return "?";
