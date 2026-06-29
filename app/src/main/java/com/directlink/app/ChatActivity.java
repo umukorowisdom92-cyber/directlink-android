@@ -60,9 +60,10 @@ public class ChatActivity extends AppCompatActivity {
         scrollView = findViewById(R.id.scrollView);
         statusText = findViewById(R.id.statusText);
 
-        // Clear unread count for this chat partner
-        com.directlink.app.NotificationManager.getInstance().clearUnread(chatPartner);
+        // Clear unread count for this chat partner when opening chat
+        NotificationManager.getInstance().clearUnread(chatPartner);
 
+        // Connect to WebSocket
         connectWebSocket();
 
         sendButton.setOnClickListener(v -> {
@@ -81,12 +82,6 @@ public class ChatActivity extends AppCompatActivity {
             return false;
         });
 
-        // Load existing messages from database
-        loadMessages();
-    }
-
-    private void loadMessages() {
-        // Display a welcome message
         addSystemMessage("Started chatting with " + chatPartner);
     }
 
@@ -125,10 +120,14 @@ public class ChatActivity extends AppCompatActivity {
                             String from = json.getString("from");
                             String content = json.getString("content");
                             String timestamp = json.optString("timestamp", "");
-                            // Display the message
+
+                            // Display the message in chat
                             displayMessage(from, content, timestamp);
-                            // Add message to database
-                            saveMessage(from, content, timestamp);
+
+                            // If the message is from the chat partner and we're in this chat, clear badge
+                            if (from.equals(chatPartner)) {
+                                NotificationManager.getInstance().clearUnread(chatPartner);
+                            }
                         } else if ("online_status".equals(type)) {
                             String username = json.getString("username");
                             boolean online = json.getBoolean("online");
@@ -181,7 +180,6 @@ public class ChatActivity extends AppCompatActivity {
             webSocket.send(json.toString());
             messageInput.setText("");
             displayMessage("Me", message, "now");
-            saveMessage("Me", message, "now");
         } catch (Exception e) {
             Toast.makeText(this, "Error sending message", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
@@ -237,11 +235,6 @@ public class ChatActivity extends AppCompatActivity {
 
         messagesContainer.addView(systemView);
         scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
-    }
-
-    private void saveMessage(String sender, String message, String timestamp) {
-        // Save to database (optional)
-        // For now, we just display it
     }
 
     private String getCurrentTimestamp() {
