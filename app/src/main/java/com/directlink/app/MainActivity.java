@@ -62,7 +62,10 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         DirectLinkClient.setAuthToken(authToken);
         DirectLinkClient.setUsername(currentUsername);
 
-        // Initialize notification manager
+        // Start WebSocket service for background message receiving
+        Intent serviceIntent = new Intent(this, WebSocketService.class);
+        startForegroundService(serviceIntent);
+
         notificationManager = NotificationManager.getInstance();
         notificationManager.setMainActivity(this);
 
@@ -137,16 +140,17 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 }
             }
             if (!found) {
-                // Add new chat item if not exists
                 chatList.add(new ChatItem(sender, "", message, timestamp, 1, false));
             }
             chatAdapter.notifyDataSetChanged();
+            updateUnreadBadge();
         });
     }
 
     public void refreshChatList() {
         runOnUiThread(() -> {
             chatAdapter.notifyDataSetChanged();
+            updateUnreadBadge();
         });
     }
 
@@ -173,7 +177,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private void updateChatList(JSONArray contacts, JSONArray requests) {
         chatList.clear();
 
-        // Friend requests
         try {
             for (int i = 0; i < requests.length(); i++) {
                 JSONObject req = requests.getJSONObject(i);
@@ -186,7 +189,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
             e.printStackTrace();
         }
 
-        // Contacts with notification data
         try {
             for (int i = 0; i < contacts.length(); i++) {
                 JSONObject contact = contacts.getJSONObject(i);
@@ -194,7 +196,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 String phone = contact.getString("phone_number");
                 boolean online = contact.optBoolean("online", false);
                 
-                // Check if there's a notification for this contact
                 int badgeCount = notificationManager.getUnreadCount(username);
                 String lastMessage = notificationManager.getLastMessage(username);
                 String lastTime = notificationManager.getLastTimestamp(username);
@@ -207,6 +208,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
         chatAdapter.notifyDataSetChanged();
         statusText.setText("📋 " + chatList.size() + " items");
+        updateUnreadBadge();
     }
 
     @Override
@@ -252,7 +254,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
     @Override
     public void onChatClick(String name, String phone) {
-        // Clear unread count when opening chat
         notificationManager.clearUnread(name);
         Intent intent = new Intent(MainActivity.this, ChatActivity.class);
         intent.putExtra("username", name);
