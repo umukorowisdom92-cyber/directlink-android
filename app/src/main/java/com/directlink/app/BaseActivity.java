@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity;
 public class BaseActivity extends AppCompatActivity {
 
     protected LinearLayout navChats, navContacts, navCalls, navSettings;
-    protected TextView badgeText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,12 +21,6 @@ public class BaseActivity extends AppCompatActivity {
         navContacts = findViewById(R.id.navContacts);
         navCalls = findViewById(R.id.navCalls);
         navSettings = findViewById(R.id.navSettings);
-
-        // Find badge in navChats
-        View badgeView = navChats.findViewById(R.id.badgeView);
-        if (badgeView != null) {
-            badgeText = badgeView.findViewById(R.id.badgeText);
-        }
 
         navChats.setOnClickListener(v -> {
             if (!(this instanceof MainActivity)) {
@@ -51,14 +44,11 @@ public class BaseActivity extends AppCompatActivity {
         });
 
         navSettings.setOnClickListener(v -> {
-            if (!(this instanceof SettingsActivity)) {
-                startActivity(new Intent(this, SettingsActivity.class));
-                finish();
-            }
+            startActivity(new Intent(this, SettingsActivity.class));
+            finish();
         });
 
         highlightCurrentNav();
-        updateBadge();
     }
 
     protected void highlightCurrentNav() {
@@ -74,7 +64,6 @@ public class BaseActivity extends AppCompatActivity {
         } else if (this instanceof CallsActivity) {
             highlightNav(navCalls);
         }
-        // Settings - no highlight
     }
 
     protected void highlightNav(LinearLayout nav) {
@@ -90,18 +79,6 @@ public class BaseActivity extends AppCompatActivity {
         if (label != null) {
             label.setTextColor(0xFF666666);
             label.setTypeface(null, android.graphics.Typeface.NORMAL);
-        }
-    }
-
-    protected void updateBadge() {
-        int totalUnread = com.directlink.app.NotificationManager.getInstance().getTotalUnreadCount();
-        if (badgeText != null) {
-            if (totalUnread > 0) {
-                badgeText.setVisibility(View.VISIBLE);
-                badgeText.setText(String.valueOf(totalUnread));
-            } else {
-                badgeText.setVisibility(View.GONE);
-            }
         }
     }
 }
