@@ -59,6 +59,10 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
             return;
         }
 
+        // Start WebSocket service
+        Intent serviceIntent = new Intent(this, WebSocketService.class);
+        startForegroundService(serviceIntent);
+
         DirectLinkClient.setAuthToken(authToken);
         DirectLinkClient.setUsername(currentUsername);
 
