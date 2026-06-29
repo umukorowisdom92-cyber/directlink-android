@@ -8,7 +8,6 @@
     android:elevation="8dp"
     android:layout_alignParentBottom="true">
 
-    <!-- Chats -->
     <LinearLayout
         android:id="@+id/navChats"
         android:layout_width="0dp"
@@ -19,6 +18,7 @@
         android:padding="4dp"
         android:background="?android:attr/selectableItemBackground">
 
+        <!-- Badge container -->
         <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
@@ -30,15 +30,16 @@
                 android:textSize="22sp" />
 
             <TextView
-                android:id="@+id/navBadge"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="top|end"
-                android:background="@drawable/badge_bg"
+                android:id="@+id/badgeText"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:background="#F44336"
                 android:textColor="#FFFFFF"
                 android:textSize="10sp"
                 android:gravity="center"
-                android:visibility="gone" />
+                android:visibility="gone"
+                android:layout_marginStart="12dp"
+                android:layout_marginBottom="12dp" />
 
         </FrameLayout>
 
@@ -51,7 +52,6 @@
 
     </LinearLayout>
 
-    <!-- Contacts -->
     <LinearLayout
         android:id="@+id/navContacts"
         android:layout_width="0dp"
@@ -77,7 +77,6 @@
 
     </LinearLayout>
 
-    <!-- Calls -->
     <LinearLayout
         android:id="@+id/navCalls"
         android:layout_width="0dp"
@@ -103,7 +102,6 @@
 
     </LinearLayout>
 
-    <!-- Settings -->
     <LinearLayout
         android:id="@+id/navSettings"
         android:layout_width="0dp"

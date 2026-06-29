@@ -60,6 +60,9 @@ public class ChatActivity extends AppCompatActivity {
         scrollView = findViewById(R.id.scrollView);
         statusText = findViewById(R.id.statusText);
 
+        // Clear unread count for this chat partner
+        com.directlink.app.NotificationManager.getInstance().clearUnread(chatPartner);
+
         connectWebSocket();
 
         sendButton.setOnClickListener(v -> {
@@ -78,6 +81,12 @@ public class ChatActivity extends AppCompatActivity {
             return false;
         });
 
+        // Load existing messages from database
+        loadMessages();
+    }
+
+    private void loadMessages() {
+        // Display a welcome message
         addSystemMessage("Started chatting with " + chatPartner);
     }
 
@@ -102,7 +111,6 @@ public class ChatActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     statusText.setText("Connected ✅");
                     statusText.setTextColor(getColor(android.R.color.holo_green_dark));
-                    addSystemMessage("Connected to chat server");
                 });
             }
 
@@ -117,7 +125,10 @@ public class ChatActivity extends AppCompatActivity {
                             String from = json.getString("from");
                             String content = json.getString("content");
                             String timestamp = json.optString("timestamp", "");
+                            // Display the message
                             displayMessage(from, content, timestamp);
+                            // Add message to database
+                            saveMessage(from, content, timestamp);
                         } else if ("online_status".equals(type)) {
                             String username = json.getString("username");
                             boolean online = json.getBoolean("online");
@@ -126,7 +137,6 @@ public class ChatActivity extends AppCompatActivity {
                                 statusText.setTextColor(online ?
                                         getColor(android.R.color.holo_green_dark) :
                                         getColor(android.R.color.darker_gray));
-                                addSystemMessage(username + " is " + (online ? "online" : "offline"));
                             }
                         }
                     } catch (Exception e) {
@@ -140,7 +150,6 @@ public class ChatActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     statusText.setText("Disconnected");
                     statusText.setTextColor(getColor(android.R.color.holo_red_dark));
-                    addSystemMessage("Disconnected from server");
                 });
             }
 
@@ -172,6 +181,7 @@ public class ChatActivity extends AppCompatActivity {
             webSocket.send(json.toString());
             messageInput.setText("");
             displayMessage("Me", message, "now");
+            saveMessage("Me", message, "now");
         } catch (Exception e) {
             Toast.makeText(this, "Error sending message", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
@@ -227,6 +237,11 @@ public class ChatActivity extends AppCompatActivity {
 
         messagesContainer.addView(systemView);
         scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+    }
+
+    private void saveMessage(String sender, String message, String timestamp) {
+        // Save to database (optional)
+        // For now, we just display it
     }
 
     private String getCurrentTimestamp() {

@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class BaseActivity extends AppCompatActivity {
 
     protected LinearLayout navChats, navContacts, navCalls, navSettings;
-    protected TextView navChatsBadge;
+    protected TextView badgeText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,12 +23,11 @@ public class BaseActivity extends AppCompatActivity {
         navCalls = findViewById(R.id.navCalls);
         navSettings = findViewById(R.id.navSettings);
 
-        // Get badge TextView
-        if (navChats != null) {
-            navChatsBadge = navChats.findViewById(R.id.navBadge);
+        // Find badge in navChats
+        View badgeView = navChats.findViewById(R.id.badgeView);
+        if (badgeView != null) {
+            badgeText = badgeView.findViewById(R.id.badgeText);
         }
-
-        updateUnreadBadge();
 
         navChats.setOnClickListener(v -> {
             if (!(this instanceof MainActivity)) {
@@ -51,27 +50,15 @@ public class BaseActivity extends AppCompatActivity {
             }
         });
 
-        // Settings - always opens SettingsActivity
         navSettings.setOnClickListener(v -> {
-            startActivity(new Intent(this, SettingsActivity.class));
-            finish();
+            if (!(this instanceof SettingsActivity)) {
+                startActivity(new Intent(this, SettingsActivity.class));
+                finish();
+            }
         });
 
         highlightCurrentNav();
-    }
-
-    protected void updateUnreadBadge() {
-        if (navChatsBadge != null) {
-            int totalUnread = NotificationManager.getInstance().getTotalUnreadCount();
-            if (totalUnread > 0) {
-                navChatsBadge.setVisibility(View.VISIBLE);
-                navChatsBadge.setText(String.valueOf(totalUnread));
-                navChatsBadge.setBackground(getDrawable(android.R.drawable.ic_notification_overlay));
-                navChatsBadge.setTextColor(getColor(android.R.color.white));
-            } else {
-                navChatsBadge.setVisibility(View.GONE);
-            }
-        }
+        updateBadge();
     }
 
     protected void highlightCurrentNav() {
@@ -91,28 +78,30 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     protected void highlightNav(LinearLayout nav) {
-        if (nav != null && nav.getChildCount() > 1) {
-            TextView label = (TextView) nav.getChildAt(1);
-            if (label != null) {
-                label.setTextColor(0xFF3F51B5);
-                label.setTypeface(null, android.graphics.Typeface.BOLD);
-            }
+        TextView label = (TextView) nav.getChildAt(1);
+        if (label != null) {
+            label.setTextColor(0xFF3F51B5);
+            label.setTypeface(null, android.graphics.Typeface.BOLD);
         }
     }
 
     protected void resetNav(LinearLayout nav) {
-        if (nav != null && nav.getChildCount() > 1) {
-            TextView label = (TextView) nav.getChildAt(1);
-            if (label != null) {
-                label.setTextColor(0xFF666666);
-                label.setTypeface(null, android.graphics.Typeface.NORMAL);
-            }
+        TextView label = (TextView) nav.getChildAt(1);
+        if (label != null) {
+            label.setTextColor(0xFF666666);
+            label.setTypeface(null, android.graphics.Typeface.NORMAL);
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        updateUnreadBadge();
+    protected void updateBadge() {
+        int totalUnread = com.directlink.app.NotificationManager.getInstance().getTotalUnreadCount();
+        if (badgeText != null) {
+            if (totalUnread > 0) {
+                badgeText.setVisibility(View.VISIBLE);
+                badgeText.setText(String.valueOf(totalUnread));
+            } else {
+                badgeText.setVisibility(View.GONE);
+            }
+        }
     }
 }
