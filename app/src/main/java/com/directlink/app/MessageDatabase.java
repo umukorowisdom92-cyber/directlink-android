@@ -11,10 +11,11 @@ import java.util.List;
 public class MessageDatabase extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "directlink_messages.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_MESSAGES = "messages";
     private static final String COLUMN_ID = "id";
+    private static final String COLUMN_USER = "user";  // NEW: Current user's username
     private static final String COLUMN_CHAT_PARTNER = "chat_partner";
     private static final String COLUMN_SENDER = "sender";
     private static final String COLUMN_MESSAGE = "message";
@@ -29,6 +30,7 @@ public class MessageDatabase extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String createTable = "CREATE TABLE " + TABLE_MESSAGES + "("
                 + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + COLUMN_USER + " TEXT,"
                 + COLUMN_CHAT_PARTNER + " TEXT,"
                 + COLUMN_SENDER + " TEXT,"
                 + COLUMN_MESSAGE + " TEXT,"
@@ -39,13 +41,15 @@ public class MessageDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_MESSAGES);
-        onCreate(db);
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE " + TABLE_MESSAGES + " ADD COLUMN " + COLUMN_USER + " TEXT DEFAULT ''");
+        }
     }
 
-    public void saveMessage(String chatPartner, String sender, String message, String timestamp) {
+    public void saveMessage(String currentUser, String chatPartner, String sender, String message, String timestamp) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(COLUMN_USER, currentUser);
         values.put(COLUMN_CHAT_PARTNER, chatPartner);
         values.put(COLUMN_SENDER, sender);
         values.put(COLUMN_MESSAGE, message);
@@ -55,20 +59,21 @@ public class MessageDatabase extends SQLiteOpenHelper {
         db.close();
     }
 
-    public List<MessageItem> getMessages(String chatPartner) {
+    public List<MessageItem> getMessages(String currentUser, String chatPartner) {
         List<MessageItem> messages = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
         String query = "SELECT * FROM " + TABLE_MESSAGES
-                + " WHERE " + COLUMN_CHAT_PARTNER + " = ?"
+                + " WHERE " + COLUMN_USER + " = ? AND " + COLUMN_CHAT_PARTNER + " = ?"
                 + " ORDER BY " + COLUMN_ID + " ASC";
 
-        Cursor cursor = db.rawQuery(query, new String[]{chatPartner});
+        Cursor cursor = db.rawQuery(query, new String[]{currentUser, chatPartner});
 
         if (cursor.moveToFirst()) {
             do {
                 MessageItem message = new MessageItem();
                 message.id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID));
+                message.user = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_USER));
                 message.chatPartner = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CHAT_PARTNER));
                 message.sender = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SENDER));
                 message.message = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MESSAGE));
@@ -82,14 +87,15 @@ public class MessageDatabase extends SQLiteOpenHelper {
         return messages;
     }
 
-    public void clearMessages(String chatPartner) {
+    public void clearMessagesForUser(String currentUser) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_MESSAGES, COLUMN_CHAT_PARTNER + " = ?", new String[]{chatPartner});
+        db.delete(TABLE_MESSAGES, COLUMN_USER + " = ?", new String[]{currentUser});
         db.close();
     }
 
     public static class MessageItem {
         public int id;
+        public String user;
         public String chatPartner;
         public String sender;
         public String message;

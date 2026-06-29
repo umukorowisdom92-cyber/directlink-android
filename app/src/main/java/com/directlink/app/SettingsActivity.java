@@ -31,17 +31,24 @@ public class SettingsActivity extends AppCompatActivity {
 
         usernameText.setText("👤 " + username);
         serverUrlText.setText("🌐 Server: " + serverUrl);
-        versionText.setText("📱 Version: 1.0.1");
+        versionText.setText("📱 Version: 1.0.2");
 
         backButton.setOnClickListener(v -> finish());
 
         logoutButton.setOnClickListener(v -> {
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.remove("auth_token");
-            editor.remove("username");
-            editor.apply();
-            startActivity(new Intent(SettingsActivity.this, LoginActivity.class));
-            finish();
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("🚪 Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Logout", (dialog, which) -> {
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.remove("auth_token");
+                    editor.remove("username");
+                    editor.apply();
+                    startActivity(new Intent(SettingsActivity.this, LoginActivity.class));
+                    finish();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
         });
 
         clearDataButton.setOnClickListener(v -> {
@@ -52,11 +59,19 @@ public class SettingsActivity extends AppCompatActivity {
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.clear();
                     editor.apply();
+                    // Clear message database
+                    MessageDatabase db = new MessageDatabase(this);
+                    db.clearMessagesForUser(username);
                     Toast.makeText(this, "Data cleared!", Toast.LENGTH_SHORT).show();
                     finish();
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
     }
 }

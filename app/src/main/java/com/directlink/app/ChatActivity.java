@@ -42,38 +42,33 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        // Get chat partner from intent
         chatPartner = getIntent().getStringExtra("username");
         currentUsername = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE)
                 .getString("username", "");
         serverUrl = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE)
                 .getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
 
-        if (chatPartner == null || chatPartner.isEmpty()) {
-            Toast.makeText(this, "Error: No chat partner", Toast.LENGTH_SHORT).show();
+        if (chatPartner == null || chatPartner.isEmpty() || currentUsername == null || currentUsername.isEmpty()) {
+            Toast.makeText(this, "Error: Not logged in", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
         setTitle("Chat with " + chatPartner);
 
-        // Initialize database
         messageDatabase = new MessageDatabase(this);
 
-        // Initialize views
         messageInput = findViewById(R.id.messageInput);
         sendButton = findViewById(R.id.sendButton);
         messagesContainer = findViewById(R.id.messagesContainer);
         scrollView = findViewById(R.id.scrollView);
         statusText = findViewById(R.id.statusText);
 
-        // Load saved messages
+        // Load saved messages for this user and chat partner
         loadSavedMessages();
 
-        // Connect to WebSocket
         connectWebSocket();
 
-        // Send message on button click
         sendButton.setOnClickListener(v -> {
             String message = messageInput.getText().toString().trim();
             if (!message.isEmpty()) {
@@ -81,7 +76,6 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        // Enable send on Enter key
         messageInput.setOnEditorActionListener((v, actionId, event) -> {
             String message = messageInput.getText().toString().trim();
             if (!message.isEmpty()) {
@@ -95,7 +89,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void loadSavedMessages() {
-        List<MessageDatabase.MessageItem> savedMessages = messageDatabase.getMessages(chatPartner);
+        List<MessageDatabase.MessageItem> savedMessages = messageDatabase.getMessages(currentUsername, chatPartner);
         for (MessageDatabase.MessageItem item : savedMessages) {
             displayMessage(item.sender, item.message, item.timestamp);
         }
@@ -141,10 +135,9 @@ public class ChatActivity extends AppCompatActivity {
                             String content = json.getString("content");
                             String timestamp = json.optString("timestamp", getCurrentTimestamp());
 
-                            // Save message to database
                             String sender = from.equals(currentUsername) ? "Me" : from;
-                            messageDatabase.saveMessage(chatPartner, sender, content, timestamp);
-
+                            // Save with current user
+                            messageDatabase.saveMessage(currentUsername, chatPartner, sender, content, timestamp);
                             displayMessage(sender, content, timestamp);
                         } else if ("online_status".equals(type)) {
                             String username = json.getString("username");
@@ -202,8 +195,7 @@ public class ChatActivity extends AppCompatActivity {
             webSocket.send(json.toString());
             messageInput.setText("");
 
-            // Save outgoing message
-            messageDatabase.saveMessage(chatPartner, "Me", message, timestamp);
+            messageDatabase.saveMessage(currentUsername, chatPartner, "Me", message, timestamp);
             displayMessage("Me", message, "now");
             addSystemMessage("Message sent");
         } catch (Exception e) {
@@ -226,7 +218,6 @@ public class ChatActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
 
-        // Style messages
         if (sender.equals("Me") || sender.equals(currentUsername)) {
             messageView.setBackgroundColor(getColor(android.R.color.holo_blue_light));
             messageView.setTextColor(getColor(android.R.color.white));

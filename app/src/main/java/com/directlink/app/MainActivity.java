@@ -52,6 +52,13 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         String savedUrl = prefs.getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
         serverUrlInput.setText(savedUrl);
 
+        // Check if user is logged in
+        if (authToken.isEmpty() || currentUsername.isEmpty()) {
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            finish();
+            return;
+        }
+
         DirectLinkClient.setAuthToken(authToken);
         DirectLinkClient.setUsername(currentUsername);
 
@@ -111,6 +118,13 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 }
             }, 500);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Do nothing - prevent logout on back press
+        // User must use the logout button in Settings
+        moveTaskToBack(true);
     }
 
     private void loadData() {
