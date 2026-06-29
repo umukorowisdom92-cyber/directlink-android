@@ -7,8 +7,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRequestListener {
+
+    public static MainActivity instance;
 
     private EditText searchInput;
     private EditText serverUrlInput;
@@ -36,6 +40,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        instance = this;
 
         setupBottomNavigation();
 
@@ -53,14 +58,13 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         serverUrlInput.setText(savedUrl);
 
         DirectLinkClient.setAuthToken(authToken);
-        DirectLinkClient.setUsername(currentUsername);
 
         chatAdapter = new ChatAdapter(chatList, this);
         chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         chatsRecyclerView.setAdapter(chatAdapter);
 
-        // Set MainActivity reference in NotificationManager
-        com.directlink.app.NotificationManager.getInstance().setMainActivity(this);
+        // Load messages from database
+        loadMessagesFromDatabase();
 
         fabAddUser.setOnClickListener(v -> showAddUserDialog());
 
@@ -82,7 +86,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 try {
                     DirectLinkClient.init(serverUrl);
                     DirectLinkClient.setAuthToken(authToken);
-                    DirectLinkClient.setUsername(currentUsername);
                     loadData();
                     new Handler(Looper.getMainLooper()).post(() -> {
                         statusText.setText("✅ Connected to: " + serverUrl);
@@ -114,6 +117,42 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 }
             }, 500);
         }
+
+        // Start WebSocket service
+        if (!currentUsername.isEmpty()) {
+            Intent serviceIntent = new Intent(this, WebSocketService.class);
+            startService(serviceIntent);
+        }
+    }
+
+    private void loadMessagesFromDatabase() {
+        // Load messages from database and update chat list
+        // This will show recent chats with unread counts
+        MessageDatabase db = new MessageDatabase(this);
+        // You can implement this to load recent chats
+    }
+
+    public void updateChatListOnNewMessage(String sender, String message, String timestamp) {
+        runOnUiThread(() -> {
+            boolean found = false;
+            for (ChatItem item : chatList) {
+                if (item.getName().equals(sender)) {
+                    item.setLastMessage(message);
+                    item.setTime(timestamp);
+                    item.setBadgeCount(item.getBadgeCount() + 1);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                chatList.add(new ChatItem(sender, message, timestamp, 1, false));
+            }
+            chatAdapter.notifyDataSetChanged();
+        });
+    }
+
+    public void updateUnreadBadge() {
+        // Update badge in bottom navigation
     }
 
     private void loadData() {
@@ -139,6 +178,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private void updateChatList(JSONArray contacts, JSONArray requests) {
         chatList.clear();
 
+        // Friend requests
         try {
             for (int i = 0; i < requests.length(); i++) {
                 JSONObject req = requests.getJSONObject(i);
@@ -151,6 +191,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
             e.printStackTrace();
         }
 
+        // Contacts
         try {
             for (int i = 0; i < contacts.length(); i++) {
                 JSONObject contact = contacts.getJSONObject(i);
@@ -165,54 +206,10 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
         chatAdapter.notifyDataSetChanged();
         statusText.setText("📋 " + chatList.size() + " items");
-        
-        // Update unread badge
-        updateUnreadBadge();
     }
-
-    // ============================================================
-    // METHODS CALLED BY NotificationManager
-    // ============================================================
-
-    public void updateChatListOnNewMessage(String sender, String message, String timestamp) {
-        boolean found = false;
-        for (ChatItem item : chatList) {
-            if (item.getName().equals(sender)) {
-                item.setLastMessage(message);
-                item.setTime(timestamp);
-                item.setBadgeCount(item.getBadgeCount() + 1);
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            chatList.add(new ChatItem(sender, "", message, timestamp, 1, false));
-        }
-        chatAdapter.notifyDataSetChanged();
-        updateUnreadBadge();
-    }
-
-    public void updateUnreadBadge() {
-        int totalUnread = 0;
-        for (ChatItem item : chatList) {
-            totalUnread += item.getBadgeCount();
-        }
-        // Update the badge in the parent (BaseActivity)
-        // The badge is handled in BaseActivity
-    }
-
-    public void refreshChatList() {
-        loadData();
-    }
-
-    // ============================================================
-    // CHAT ADAPTER LISTENERS
-    // ============================================================
 
     @Override
     public void onAccept(String requestId, String name, String phone) {
-        DirectLinkClient.setUsername(currentUsername);
-        Toast.makeText(this, "Accepting friend request...", Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             try {
                 DirectLinkClient.setAuthToken(authToken);
@@ -230,9 +227,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     }
 
     @Override
-    public void onReject(String requestId, String name, String phone) {
-        DirectLinkClient.setUsername(currentUsername);
-        Toast.makeText(this, "Rejecting friend request...", Toast.LENGTH_SHORT).show();
+    public void onReject(String requestId) {
         new Thread(() -> {
             try {
                 DirectLinkClient.setAuthToken(authToken);
@@ -251,25 +246,10 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
     @Override
     public void onChatClick(String name, String phone) {
-        // Clear the badge count for this user
-        for (ChatItem item : chatList) {
-            if (item.getName().equals(name)) {
-                item.setBadgeCount(0);
-                chatAdapter.notifyDataSetChanged();
-                break;
-            }
-        }
-        updateUnreadBadge();
-
-        Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+        Intent intent = new Intent(this, ChatActivity.class);
         intent.putExtra("username", name);
-        intent.putExtra("phone", phone);
         startActivity(intent);
     }
-
-    // ============================================================
-    // ADD USER
-    // ============================================================
 
     private void showAddUserDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
@@ -309,7 +289,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 String serverUrl = prefs.getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
                 DirectLinkClient.init(serverUrl);
                 DirectLinkClient.setAuthToken(authToken);
-                DirectLinkClient.setUsername(currentUsername);
 
                 String result = DirectLinkClient.checkUser(phone);
                 JSONObject json = new JSONObject(result);
@@ -343,7 +322,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         new Thread(() -> {
             try {
                 DirectLinkClient.setAuthToken(authToken);
-                DirectLinkClient.setUsername(currentUsername);
                 String result = DirectLinkClient.sendFriendRequest(username);
                 new Handler(Looper.getMainLooper()).post(() -> {
                     Toast.makeText(this, "Friend request sent to " + username + "!", Toast.LENGTH_SHORT).show();
@@ -358,6 +336,17 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     }
 
     private void filterChats(String query) {
-        // TODO: Implement proper search
+        if (query.isEmpty()) {
+            loadData();
+        } else {
+            List<ChatItem> filtered = new ArrayList<>();
+            for (ChatItem item : chatList) {
+                if (item.getName().toLowerCase().contains(query.toLowerCase())) {
+                    filtered.add(item);
+                }
+            }
+            chatAdapter = new ChatAdapter(filtered, this);
+            chatsRecyclerView.setAdapter(chatAdapter);
+        }
     }
 }

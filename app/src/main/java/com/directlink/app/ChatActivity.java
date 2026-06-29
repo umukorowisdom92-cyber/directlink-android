@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import okhttp3.OkHttpClient;
@@ -34,6 +35,7 @@ public class ChatActivity extends AppCompatActivity {
     private String currentUsername;
     private String chatPartner;
     private String serverUrl;
+    private MessageDatabase messageDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +62,12 @@ public class ChatActivity extends AppCompatActivity {
         scrollView = findViewById(R.id.scrollView);
         statusText = findViewById(R.id.statusText);
 
+        // Initialize database
+        messageDatabase = new MessageDatabase(this);
+
+        // Load existing messages
+        loadMessagesFromDatabase();
+
         // Clear unread count for this chat partner when opening chat
         NotificationManager.getInstance().clearUnread(chatPartner);
 
@@ -85,8 +93,20 @@ public class ChatActivity extends AppCompatActivity {
         addSystemMessage("Started chatting with " + chatPartner);
     }
 
+    private void loadMessagesFromDatabase() {
+        List<MessageDatabase.MessageItem> messages = messageDatabase.getMessages(currentUsername, chatPartner);
+        for (MessageDatabase.MessageItem msg : messages) {
+            displayMessage(msg.sender, msg.message, msg.timestamp);
+        }
+        scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+    }
+
     private void connectWebSocket() {
         String wsUrl = serverUrl.replace("https://", "wss://").replace("http://", "ws://");
+        // Remove trailing slash if exists
+        if (wsUrl.endsWith("/")) {
+            wsUrl = wsUrl.substring(0, wsUrl.length() - 1);
+        }
         String fullUrl = wsUrl + "/ws?username=" + currentUsername;
 
         statusText.setText("Connecting...");
@@ -119,12 +139,17 @@ public class ChatActivity extends AppCompatActivity {
                         if ("private_message".equals(type)) {
                             String from = json.getString("from");
                             String content = json.getString("content");
-                            String timestamp = json.optString("timestamp", "");
+                            String timestamp = json.optString("timestamp", getCurrentTimestamp());
+
+                            // Save to database
+                            if (currentUsername != null && chatPartner != null) {
+                                messageDatabase.saveMessage(currentUsername, chatPartner, from, content, timestamp);
+                            }
 
                             // Display the message in chat
                             displayMessage(from, content, timestamp);
 
-                            // If the message is from the chat partner and we're in this chat, clear badge
+                            // If message is from chat partner, clear badge
                             if (from.equals(chatPartner)) {
                                 NotificationManager.getInstance().clearUnread(chatPartner);
                             }
@@ -170,16 +195,26 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         try {
+            String timestamp = getCurrentTimestamp();
             JSONObject json = new JSONObject();
             json.put("type", "private_message");
             json.put("from", currentUsername);
             json.put("to", chatPartner);
             json.put("content", message);
-            json.put("timestamp", getCurrentTimestamp());
+            json.put("timestamp", timestamp);
 
             webSocket.send(json.toString());
+
+            // Save to database
+            messageDatabase.saveMessage(currentUsername, chatPartner, currentUsername, message, timestamp);
+
             messageInput.setText("");
             displayMessage("Me", message, "now");
+
+            // Update the main chat list
+            if (MainActivity.instance != null) {
+                MainActivity.instance.updateChatListOnNewMessage(chatPartner, message, timestamp);
+            }
         } catch (Exception e) {
             Toast.makeText(this, "Error sending message", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
@@ -188,7 +223,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void displayMessage(String sender, String message, String timestamp) {
         TextView messageView = new TextView(this);
-        String displayText = sender + ": " + message;
+        String displayText = message;
         if (!timestamp.isEmpty() && !timestamp.equals("now")) {
             displayText = displayText + "\n" + timestamp;
         }
@@ -200,7 +235,8 @@ public class ChatActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
 
-        if (sender.equals("Me") || sender.equals(currentUsername)) {
+        boolean isMe = sender.equals(currentUsername) || sender.equals("Me");
+        if (isMe) {
             messageView.setBackgroundColor(getColor(android.R.color.holo_blue_light));
             messageView.setTextColor(getColor(android.R.color.white));
             messageView.setGravity(android.view.Gravity.END);

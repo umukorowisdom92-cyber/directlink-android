@@ -21,6 +21,7 @@ public class WebSocketService extends Service {
     private WebSocket webSocket;
     private String currentUsername;
     private String serverUrl;
+    private boolean isConnected = false;
 
     @Override
     public void onCreate() {
@@ -31,8 +32,20 @@ public class WebSocketService extends Service {
         connectWebSocket();
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
     private void connectWebSocket() {
+        if (currentUsername == null || currentUsername.isEmpty()) {
+            return;
+        }
+
         String wsUrl = serverUrl.replace("https://", "wss://").replace("http://", "ws://");
+        if (wsUrl.endsWith("/")) {
+            wsUrl = wsUrl.substring(0, wsUrl.length() - 1);
+        }
         String fullUrl = wsUrl + "/ws?username=" + currentUsername;
 
         OkHttpClient client = new OkHttpClient.Builder()
@@ -46,7 +59,7 @@ public class WebSocketService extends Service {
         webSocket = client.newWebSocket(request, new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
-                // Connected
+                isConnected = true;
             }
 
             @Override
@@ -64,7 +77,7 @@ public class WebSocketService extends Service {
                         showNotification(from, content);
 
                         // Update NotificationManager
-                        com.directlink.app.NotificationManager.getInstance().onMessageReceived(from, content, timestamp);
+                        NotificationManager.getInstance().onMessageReceived(from, content, timestamp);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -73,6 +86,7 @@ public class WebSocketService extends Service {
 
             @Override
             public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+                isConnected = false;
                 // Reconnect after delay
                 new android.os.Handler().postDelayed(() -> connectWebSocket(), 5000);
             }
