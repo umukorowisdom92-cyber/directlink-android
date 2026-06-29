@@ -62,10 +62,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         DirectLinkClient.setAuthToken(authToken);
         DirectLinkClient.setUsername(currentUsername);
 
-        // Start WebSocket service for background message receiving
-        Intent serviceIntent = new Intent(this, WebSocketService.class);
-        startForegroundService(serviceIntent);
-
         notificationManager = NotificationManager.getInstance();
         notificationManager.setMainActivity(this);
 
@@ -143,14 +139,12 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 chatList.add(new ChatItem(sender, "", message, timestamp, 1, false));
             }
             chatAdapter.notifyDataSetChanged();
-            updateUnreadBadge();
         });
     }
 
     public void refreshChatList() {
         runOnUiThread(() -> {
             chatAdapter.notifyDataSetChanged();
-            updateUnreadBadge();
         });
     }
 
@@ -208,7 +202,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
 
         chatAdapter.notifyDataSetChanged();
         statusText.setText("📋 " + chatList.size() + " items");
-        updateUnreadBadge();
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.directlink.app;
 
-import android.content.SharedPreferences;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +9,7 @@ public class NotificationManager {
     private Map<String, String> lastMessages = new HashMap<>();
     private Map<String, String> lastTimestamps = new HashMap<>();
     private MainActivity mainActivity;
+    private int totalUnread = 0;
 
     private NotificationManager() {}
 
@@ -25,29 +25,35 @@ public class NotificationManager {
     }
 
     public void onMessageReceived(String sender, String message, String timestamp) {
-        // Update unread count
         int currentCount = unreadCounts.getOrDefault(sender, 0);
         unreadCounts.put(sender, currentCount + 1);
+        totalUnread++;
         
-        // Update last message
         lastMessages.put(sender, message);
         lastTimestamps.put(sender, timestamp);
         
-        // Notify MainActivity to update chat list
         if (mainActivity != null) {
             mainActivity.updateChatListOnNewMessage(sender, message, timestamp);
+            mainActivity.updateUnreadBadge();
         }
     }
 
     public void clearUnread(String sender) {
+        int count = unreadCounts.getOrDefault(sender, 0);
+        totalUnread = Math.max(0, totalUnread - count);
         unreadCounts.put(sender, 0);
         if (mainActivity != null) {
             mainActivity.refreshChatList();
+            mainActivity.updateUnreadBadge();
         }
     }
 
     public int getUnreadCount(String sender) {
         return unreadCounts.getOrDefault(sender, 0);
+    }
+
+    public int getTotalUnreadCount() {
+        return totalUnread;
     }
 
     public String getLastMessage(String sender) {
@@ -62,5 +68,6 @@ public class NotificationManager {
         unreadCounts.clear();
         lastMessages.clear();
         lastTimestamps.clear();
+        totalUnread = 0;
     }
 }

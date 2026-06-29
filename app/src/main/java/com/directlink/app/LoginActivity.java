@@ -64,15 +64,17 @@ public class LoginActivity extends AppCompatActivity {
 
                                 statusText.setText("✅ Login successful!");
 
-                                // Save to SharedPreferences
                                 SharedPreferences.Editor editor = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE).edit();
                                 editor.putString("auth_token", token);
                                 editor.putString("username", username);
                                 editor.apply();
 
-                                // IMPORTANT: Set username in the client
                                 DirectLinkClient.setAuthToken(token);
                                 DirectLinkClient.setUsername(username);
+
+                                // Start WebSocket service
+                                Intent serviceIntent = new Intent(LoginActivity.this, WebSocketService.class);
+                                startForegroundService(serviceIntent);
 
                                 Toast.makeText(LoginActivity.this, "Welcome " + username + "!", Toast.LENGTH_LONG).show();
 
