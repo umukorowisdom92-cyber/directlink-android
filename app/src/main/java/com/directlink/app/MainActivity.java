@@ -42,6 +42,9 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         setContentView(R.layout.activity_main);
         instance = this;
 
+        // Set MainActivity in NotificationManager
+        NotificationManager.setMainActivity(this);
+
         setupBottomNavigation();
 
         searchInput = findViewById(R.id.searchInput);
@@ -124,6 +127,13 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh chat list when returning to MainActivity
+        refreshChatList();
+    }
+
     public void refreshChatList() {
         runOnUiThread(() -> {
             if (isConnected) {
@@ -148,11 +158,16 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 chatList.add(new ChatItem(sender, message, timestamp, 1, false));
             }
             chatAdapter.notifyDataSetChanged();
+            updateUnreadBadge();
         });
     }
 
     public void updateUnreadBadge() {
         // Update badge in bottom navigation
+        runOnUiThread(() -> {
+            int totalUnread = NotificationManager.getTotalUnread();
+            // You can update a badge view here
+        });
     }
 
     private void loadData() {

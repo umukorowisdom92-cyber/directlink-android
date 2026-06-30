@@ -60,6 +60,20 @@ public class WebSocketService extends Service {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
                 isConnected = true;
+                // Notify that we're online
+                sendOnlineStatus(true);
+            }
+
+            private void sendOnlineStatus(boolean online) {
+                try {
+                    JSONObject json = new JSONObject();
+                    json.put("type", "online_status");
+                    json.put("username", currentUsername);
+                    json.put("online", online);
+                    webSocket.send(json.toString());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -76,13 +90,19 @@ public class WebSocketService extends Service {
                         // Show notification
                         showNotification(from, content);
 
-                        // Update NotificationManager using static methods
-                        com.directlink.app.NotificationManager.onMessageReceived(from, content, timestamp);
-                        com.directlink.app.NotificationManager.refreshChatList();
+                        // Update NotificationManager
+                        NotificationManager.onMessageReceived(from, content, timestamp);
+                        NotificationManager.refreshChatList();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void onClosing(WebSocket webSocket, int code, String reason) {
+                isConnected = false;
+                sendOnlineStatus(false);
             }
 
             @Override
