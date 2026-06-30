@@ -54,7 +54,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         authToken = prefs.getString("auth_token", "");
         currentUsername = prefs.getString("username", "");
-        String savedUrl = prefs.getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
+        String savedUrl = prefs.getString("server_url", "https://founder-sector-palestinian-date.trycloudflare.com");
         serverUrlInput.setText(savedUrl);
 
         DirectLinkClient.setAuthToken(authToken);
