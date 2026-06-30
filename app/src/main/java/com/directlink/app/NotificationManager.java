@@ -1,17 +1,17 @@
 package com.directlink.app;
 
-import java.util.HashMap;
-import java.util.Map;
+import android.content.Context;
+import android.content.SharedPreferences;
+import androidx.core.app.NotificationCompat;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
 
 public class NotificationManager {
     private static NotificationManager instance;
-    private Map<String, Integer> unreadCounts = new HashMap<>();
-    private Map<String, String> lastMessages = new HashMap<>();
-    private Map<String, String> lastTimestamps = new HashMap<>();
-    private static MainActivity mainActivity;
-    private int totalUnread = 0;
-
-    private NotificationManager() {}
+    private Context context;
+    private static final String CHANNEL_ID = "directlink_channel";
+    private static final int NOTIFICATION_ID = 1001;
 
     public static synchronized NotificationManager getInstance() {
         if (instance == null) {
@@ -20,56 +20,65 @@ public class NotificationManager {
         return instance;
     }
 
-    public static void setMainActivity(MainActivity activity) {
-        mainActivity = activity;
+    private NotificationManager() {}
+
+    public void init(Context context) {
+        this.context = context.getApplicationContext();
+        createNotificationChannel();
     }
 
-    public static void onMessageReceived(String sender, String message, String timestamp) {
-        NotificationManager mgr = getInstance();
-        int currentCount = mgr.unreadCounts.getOrDefault(sender, 0);
-        mgr.unreadCounts.put(sender, currentCount + 1);
-        mgr.totalUnread++;
-
-        mgr.lastMessages.put(sender, message);
-        mgr.lastTimestamps.put(sender, timestamp);
-
-        if (mainActivity != null) {
-            mainActivity.updateChatListOnNewMessage(sender, message, timestamp);
-            mainActivity.updateUnreadBadge();
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                "DirectLink Messages",
+                android.app.NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Notifications for new DirectLink messages");
+            android.app.NotificationManager manager = 
+                (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
         }
     }
 
-    public static void clearUnread(String chatPartner) {
-        NotificationManager mgr = getInstance();
-        if (chatPartner != null && mgr.unreadCounts.containsKey(chatPartner)) {
-            int removed = mgr.unreadCounts.remove(chatPartner);
-            mgr.totalUnread = Math.max(0, mgr.totalUnread - removed);
+    public void showNotification(String title, String message) {
+        if (context == null) return;
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true);
+
+        android.app.NotificationManager manager = 
+            (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.notify(NOTIFICATION_ID, builder.build());
         }
     }
 
-    public static int getUnreadCount(String chatPartner) {
-        NotificationManager mgr = getInstance();
-        return mgr.unreadCounts.getOrDefault(chatPartner, 0);
+    public void onMessageReceived(String from, String content, String timestamp) {
+        // Show notification
+        showNotification("New message from " + from, content);
+        
+        // Update badge count in SharedPreferences
+        SharedPreferences prefs = context.getSharedPreferences("DirectLinkPrefs", Context.MODE_PRIVATE);
+        int currentBadge = prefs.getInt("badge_count", 0);
+        prefs.edit().putInt("badge_count", currentBadge + 1).apply();
     }
 
-    public static int getTotalUnread() {
-        NotificationManager mgr = getInstance();
-        return mgr.totalUnread;
+    public int getBadgeCount() {
+        if (context == null) return 0;
+        SharedPreferences prefs = context.getSharedPreferences("DirectLinkPrefs", Context.MODE_PRIVATE);
+        return prefs.getInt("badge_count", 0);
     }
 
-    public static String getLastMessage(String chatPartner) {
-        NotificationManager mgr = getInstance();
-        return mgr.lastMessages.get(chatPartner);
-    }
-
-    public static String getLastTimestamp(String chatPartner) {
-        NotificationManager mgr = getInstance();
-        return mgr.lastTimestamps.get(chatPartner);
-    }
-
-    public static void refreshChatList() {
-        if (mainActivity != null) {
-            mainActivity.refreshChatList();
-        }
+    public void clearBadgeCount() {
+        if (context == null) return;
+        SharedPreferences prefs = context.getSharedPreferences("DirectLinkPrefs", Context.MODE_PRIVATE);
+        prefs.edit().putInt("badge_count", 0).apply();
     }
 }

@@ -1,10 +1,8 @@
 package com.directlink.app;
 
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.view.View;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
@@ -42,7 +40,9 @@ public class ChatActivity extends AppCompatActivity {
         messageInput = findViewById(R.id.messageInput);
         sendButton = findViewById(R.id.sendButton);
 
-        chatPartnerName.setText(chatPartner);
+        if (chatPartnerName != null) {
+            chatPartnerName.setText(chatPartner);
+        }
 
         messageAdapter = new MessageAdapter(messages);
         messagesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -59,7 +59,6 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void loadMessages() {
-        // For now, load demo messages
         messages.clear();
         messages.add(new Message(chatPartner, "Hey there! How are you?", System.currentTimeMillis(), false));
         messages.add(new Message(currentUsername, "I'm good, thanks! You?", System.currentTimeMillis(), true));
@@ -75,7 +74,7 @@ public class ChatActivity extends AppCompatActivity {
         Toast.makeText(this, "Message sent to " + chatPartner, Toast.LENGTH_SHORT).show();
     }
 
-    private static class Message {
+    static class Message {
         String sender;
         String content;
         long timestamp;
@@ -89,7 +88,7 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    private static class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHolder> {
+    static class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHolder> {
         private List<Message> messages;
 
         MessageAdapter(List<Message> messages) {
