@@ -72,14 +72,12 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             chatHolder.avatar.setText(chat.getAvatarText());
             chatHolder.avatar.setBackgroundColor(chat.getAvatarColor());
 
-            // Online/Offline dot
             if (chat.isOnline()) {
                 chatHolder.onlineDot.setBackgroundResource(R.drawable.online_dot);
             } else {
                 chatHolder.onlineDot.setBackgroundResource(R.drawable.offline_dot);
             }
 
-            // Badge - Show unread count
             if (chat.getBadgeCount() > 0) {
                 chatHolder.badge.setVisibility(View.VISIBLE);
                 chatHolder.badge.setText(String.valueOf(chat.getBadgeCount()));
@@ -98,16 +96,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public int getItemCount() {
         return chatList.size();
-    }
-
-    public void updateBadgeCount(int position, int count) {
-        if (position >= 0 && position < chatList.size()) {
-            ChatItem item = chatList.get(position);
-            if (item.getType() == ChatItem.TYPE_CHAT) {
-                item.setBadgeCount(count);
-                notifyItemChanged(position);
-            }
-        }
     }
 
     static class ChatViewHolder extends RecyclerView.ViewHolder {

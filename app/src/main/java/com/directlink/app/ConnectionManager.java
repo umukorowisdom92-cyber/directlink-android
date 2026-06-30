@@ -17,40 +17,41 @@ public class ConnectionManager {
     private static ConnectionManager instance;
     private static final String TAG = "DirectLink";
     
+    // Cloudflare Tunnel URL - Update this when URL changes
     public static final String SERVER_URL = "https://founder-sector-palestinian-date.trycloudflare.com";
     
     private String authToken = null;
     private String currentUsername = null;
     private Context context;
-    
+
     public static synchronized ConnectionManager getInstance() {
         if (instance == null) {
             instance = new ConnectionManager();
         }
         return instance;
     }
-    
+
     private ConnectionManager() {}
-    
+
     public void init(Context context) {
         this.context = context.getApplicationContext();
         SharedPreferences prefs = context.getSharedPreferences("DirectLinkPrefs", Context.MODE_PRIVATE);
         authToken = prefs.getString("auth_token", null);
         currentUsername = prefs.getString("username", null);
     }
-    
+
     public boolean isLoggedIn() {
         return authToken != null && !authToken.isEmpty();
     }
-    
+
     public String getUsername() {
         return currentUsername;
     }
-    
+
     public String getAuthToken() {
         return authToken;
     }
-    
+
     // ============================================================
     // AUTHENTICATION
     // ============================================================
@@ -111,7 +112,7 @@ public class ConnectionManager {
             editor.apply();
         }
     }
-    
+
     // ============================================================
     // CONTACTS
     // ============================================================
@@ -131,7 +132,7 @@ public class ConnectionManager {
         }
         return contacts;
     }
-    
+
     // ============================================================
     // FRIEND REQUESTS
     // ============================================================
@@ -163,12 +164,25 @@ public class ConnectionManager {
         String response = sendPostRequest("/friend_request/respond", json.toString(), authToken);
         return new JSONObject(response);
     }
+
+    // ============================================================
+    // USER PROFILE
+    // ============================================================
+    
+    public JSONObject getProfile() throws Exception {
+        String response = sendGetRequest("/profile", authToken);
+        return new JSONObject(response);
+    }
+
+    // ============================================================
+    // CHECK USER
+    // ============================================================
     
     public JSONObject checkUser(String phone) throws Exception {
         String response = sendGetRequest("/check?phone=" + java.net.URLEncoder.encode(phone, "UTF-8"), null);
         return new JSONObject(response);
     }
-    
+
     // ============================================================
     // NETWORK HELPERS
     // ============================================================

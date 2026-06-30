@@ -1,7 +1,6 @@
 package com.directlink.app;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -31,11 +30,7 @@ public class RegisterActivity extends AppCompatActivity {
         statusText = findViewById(R.id.registerStatus);
         goToLogin = findViewById(R.id.goToLogin);
 
-        SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
-        String serverUrl = prefs.getString("server_url", "https://founder-sector-palestinian-date.trycloudflare.com");
-        
-        // Set the server URL in the client
-        DirectLinkClient.init(serverUrl);
+        ConnectionManager.getInstance().init(this);
 
         goToLogin.setOnClickListener(v -> {
             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
@@ -62,21 +57,18 @@ public class RegisterActivity extends AppCompatActivity {
 
             new Thread(() -> {
                 try {
-                    String result = DirectLinkClient.register(username, phone, password);
-                    JSONObject json = new JSONObject(result);
-
+                    JSONObject result = ConnectionManager.getInstance().register(username, phone, password);
+                    
                     new Handler(Looper.getMainLooper()).post(() -> {
                         try {
-                            if (json.has("token")) {
+                            if (result.has("token")) {
                                 statusText.setText("✅ Registration successful!");
                                 Toast.makeText(RegisterActivity.this, "Account created! Please login.", Toast.LENGTH_LONG).show();
-
                                 startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
                                 finish();
-                            } else if (json.has("error")) {
-                                String error = json.getString("error");
-                                statusText.setText("❌ " + error);
-                                Toast.makeText(RegisterActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                            } else if (result.has("error")) {
+                                statusText.setText("❌ " + result.getString("error"));
+                                Toast.makeText(RegisterActivity.this, "Error: " + result.getString("error"), Toast.LENGTH_LONG).show();
                             } else {
                                 statusText.setText("❌ Registration failed");
                                 Toast.makeText(RegisterActivity.this, "Registration failed", Toast.LENGTH_LONG).show();

@@ -23,7 +23,6 @@ public class ChatActivity extends AppCompatActivity {
     private MessageAdapter messageAdapter;
     private List<Message> messages = new ArrayList<>();
     private String chatPartner;
-    private String chatPartnerPhone;
     private String currentUsername;
 
     @Override
@@ -32,7 +31,6 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
 
         chatPartner = getIntent().getStringExtra("username");
-        chatPartnerPhone = getIntent().getStringExtra("phone");
         currentUsername = ConnectionManager.getInstance().getUsername();
 
         chatPartnerName = findViewById(R.id.chatPartnerName);
@@ -59,6 +57,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void loadMessages() {
+        // For now, show demo messages
         messages.clear();
         messages.add(new Message(chatPartner, "Hey there! How are you?", System.currentTimeMillis(), false));
         messages.add(new Message(currentUsername, "I'm good, thanks! You?", System.currentTimeMillis(), true));
@@ -67,6 +66,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void sendMessage(String message) {
+        // For now, just show it locally
         messages.add(new Message(currentUsername, message, System.currentTimeMillis(), true));
         messageAdapter.notifyDataSetChanged();
         messageInput.setText("");

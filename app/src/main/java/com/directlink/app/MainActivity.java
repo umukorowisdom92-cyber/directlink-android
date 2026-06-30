@@ -70,7 +70,10 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
 
         new Thread(() -> {
             try {
+                // Load contacts from server
                 List<Contact> contacts = ConnectionManager.getInstance().getContacts();
+                
+                // Load friend requests
                 JSONArray requests = ConnectionManager.getInstance().getFriendRequests();
                 
                 new Handler(Looper.getMainLooper()).post(() -> {
@@ -79,7 +82,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
             } catch (Exception e) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     statusText.setText("❌ Error: " + e.getMessage());
-                    Toast.makeText(this, "Error loading data", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error loading data: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         }).start();
@@ -89,7 +92,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
         chatList.clear();
         totalUnreadCount = 0;
 
-        // Friend requests
+        // Add friend requests first
         try {
             for (int i = 0; i < requests.length(); i++) {
                 JSONObject req = requests.getJSONObject(i);
@@ -102,8 +105,9 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
             e.printStackTrace();
         }
 
-        // Contacts with unread badges
+        // Add contacts
         for (Contact contact : contacts) {
+            // For now, random unread count (server doesn't have messages yet)
             int unread = (int) (Math.random() * 3);
             if (unread > 0) {
                 totalUnreadCount += unread;
@@ -135,7 +139,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
     @Override
     public void onChatClick(String name, String phone) {
         Toast.makeText(this, "💬 Opening chat with " + name, Toast.LENGTH_SHORT).show();
-        // Open ChatActivity
         Intent intent = new Intent(this, ChatActivity.class);
         intent.putExtra("username", name);
         intent.putExtra("phone", phone);
@@ -204,6 +207,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
         new Thread(() -> {
             try {
                 JSONObject result = ConnectionManager.getInstance().checkUser(phone);
+                
                 new Handler(Looper.getMainLooper()).post(() -> {
                     try {
                         if (result.has("on_directlink") && result.getBoolean("on_directlink")) {

@@ -1,7 +1,6 @@
 package com.directlink.app;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -30,8 +29,13 @@ public class LoginActivity extends AppCompatActivity {
         statusText = findViewById(R.id.loginStatus);
         goToRegister = findViewById(R.id.goToRegister);
 
-        SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
-        String serverUrl = prefs.getString("server_url", "https://founder-sector-palestinian-date.trycloudflare.com");
+        ConnectionManager.getInstance().init(this);
+
+        if (ConnectionManager.getInstance().isLoggedIn()) {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+            return;
+        }
 
         goToRegister.setOnClickListener(v -> {
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
@@ -52,38 +56,18 @@ public class LoginActivity extends AppCompatActivity {
 
             new Thread(() -> {
                 try {
-                    DirectLinkClient.init(serverUrl);
-                    String result = DirectLinkClient.login(phone, password);
-                    JSONObject json = new JSONObject(result);
-
+                    JSONObject result = ConnectionManager.getInstance().login(phone, password);
+                    
                     new Handler(Looper.getMainLooper()).post(() -> {
                         try {
-                            if (json.has("token")) {
-                                String token = json.getString("token");
-                                String username = json.getString("username");
-
+                            if (result.has("token")) {
                                 statusText.setText("✅ Login successful!");
-
-                                SharedPreferences.Editor editor = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE).edit();
-                                editor.putString("auth_token", token);
-                                editor.putString("username", username);
-                                editor.apply();
-
-                                DirectLinkClient.setAuthToken(token);
-                                DirectLinkClient.setUsername(username);
-
-                                // Start WebSocket service
-                                Intent serviceIntent = new Intent(LoginActivity.this, WebSocketService.class);
-                                startForegroundService(serviceIntent);
-
-                                Toast.makeText(LoginActivity.this, "Welcome " + username + "!", Toast.LENGTH_LONG).show();
-
+                                Toast.makeText(LoginActivity.this, "Welcome!", Toast.LENGTH_LONG).show();
                                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                                 finish();
-                            } else if (json.has("error")) {
-                                String error = json.getString("error");
-                                statusText.setText("❌ " + error);
-                                Toast.makeText(LoginActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                            } else if (result.has("error")) {
+                                statusText.setText("❌ " + result.getString("error"));
+                                Toast.makeText(LoginActivity.this, "Error: " + result.getString("error"), Toast.LENGTH_LONG).show();
                             } else {
                                 statusText.setText("❌ Login failed");
                                 Toast.makeText(LoginActivity.this, "Login failed", Toast.LENGTH_LONG).show();
