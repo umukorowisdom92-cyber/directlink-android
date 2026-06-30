@@ -17,21 +17,11 @@ public class ConnectionManager {
     private static ConnectionManager instance;
     private static final String TAG = "DirectLink";
     
-    // Server URL - Update this with your Cloudflare URL
     public static final String SERVER_URL = "https://founder-sector-palestinian-date.trycloudflare.com";
     
     private String authToken = null;
     private String currentUsername = null;
     private Context context;
-    
-    // Message listeners
-    private List<MessageListener> messageListeners = new ArrayList<>();
-    
-    public interface MessageListener {
-        void onMessageReceived(String from, String message, String timestamp);
-        void onFriendRequestReceived(String from, String requestId);
-        void onContactOnline(String username, boolean online);
-    }
     
     public static synchronized ConnectionManager getInstance() {
         if (instance == null) {
@@ -59,28 +49,6 @@ public class ConnectionManager {
     
     public String getAuthToken() {
         return authToken;
-    }
-    
-    public void addMessageListener(MessageListener listener) {
-        if (!messageListeners.contains(listener)) {
-            messageListeners.add(listener);
-        }
-    }
-    
-    public void removeMessageListener(MessageListener listener) {
-        messageListeners.remove(listener);
-    }
-    
-    private void notifyMessageReceived(String from, String message, String timestamp) {
-        for (MessageListener listener : messageListeners) {
-            listener.onMessageReceived(from, message, timestamp);
-        }
-    }
-    
-    private void notifyFriendRequestReceived(String from, String requestId) {
-        for (MessageListener listener : messageListeners) {
-            listener.onFriendRequestReceived(from, requestId);
-        }
     }
     
     // ============================================================
@@ -199,22 +167,6 @@ public class ConnectionManager {
     public JSONObject checkUser(String phone) throws Exception {
         String response = sendGetRequest("/check?phone=" + java.net.URLEncoder.encode(phone, "UTF-8"), null);
         return new JSONObject(response);
-    }
-    
-    // ============================================================
-    // MESSAGES - For badge counts
-    // ============================================================
-    
-    public int getUnreadMessageCount(String chatPartner) throws Exception {
-        // This would fetch unread count from server
-        // For now, returns 0
-        return 0;
-    }
-    
-    public int getTotalUnreadCount() throws Exception {
-        // Get total unread messages from all chats
-        // This would come from server
-        return 0;
     }
     
     // ============================================================

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -69,10 +70,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
 
         new Thread(() -> {
             try {
-                // Load contacts
                 List<Contact> contacts = ConnectionManager.getInstance().getContacts();
-                
-                // Load friend requests
                 JSONArray requests = ConnectionManager.getInstance().getFriendRequests();
                 
                 new Handler(Looper.getMainLooper()).post(() -> {
@@ -91,7 +89,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
         chatList.clear();
         totalUnreadCount = 0;
 
-        // Add friend requests first
+        // Friend requests
         try {
             for (int i = 0; i < requests.length(); i++) {
                 JSONObject req = requests.getJSONObject(i);
@@ -104,10 +102,8 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
             e.printStackTrace();
         }
 
-        // Add contacts
+        // Contacts with unread badges
         for (Contact contact : contacts) {
-            // Simulate unread messages (for demo, random 0-3)
-            // In real app, this would come from server
             int unread = (int) (Math.random() * 3);
             if (unread > 0) {
                 totalUnreadCount += unread;
@@ -136,14 +132,14 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
         }
     }
 
-    // ============================================================
-    // ChatAdapter Callbacks
-    // ============================================================
-
     @Override
     public void onChatClick(String name, String phone) {
         Toast.makeText(this, "💬 Opening chat with " + name, Toast.LENGTH_SHORT).show();
-        // TODO: Open ChatActivity
+        // Open ChatActivity
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("username", name);
+        intent.putExtra("phone", phone);
+        startActivity(intent);
     }
 
     @Override
@@ -180,10 +176,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
         }).start();
     }
 
-    // ============================================================
-    // Add User
-    // ============================================================
-
     private void showAddUserDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("➕ Add New User");
@@ -212,7 +204,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
         new Thread(() -> {
             try {
                 JSONObject result = ConnectionManager.getInstance().checkUser(phone);
-                
                 new Handler(Looper.getMainLooper()).post(() -> {
                     try {
                         if (result.has("on_directlink") && result.getBoolean("on_directlink")) {
