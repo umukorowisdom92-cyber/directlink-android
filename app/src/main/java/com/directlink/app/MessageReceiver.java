@@ -12,11 +12,7 @@ public class MessageReceiver extends BroadcastReceiver {
             String content = intent.getStringExtra("content");
             String timestamp = intent.getStringExtra("timestamp");
 
-            // Update notification manager
-            NotificationManager.getInstance().onMessageReceived(from, content, timestamp);
-
-            // If MainActivity is visible, it will update itself
-            // If not, the notification badge will show when app opens
+            DirectLinkNotificationManager.getInstance().onMessageReceived(from, content, timestamp);
         }
     }
 }

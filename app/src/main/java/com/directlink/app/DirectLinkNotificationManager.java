@@ -2,25 +2,25 @@ package com.directlink.app;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import androidx.core.app.NotificationCompat;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
+import androidx.core.app.NotificationCompat;
 
-public class NotificationManager {
-    private static NotificationManager instance;
+public class DirectLinkNotificationManager {
+    private static DirectLinkNotificationManager instance;
     private Context context;
     private static final String CHANNEL_ID = "directlink_channel";
     private static final int NOTIFICATION_ID = 1001;
 
-    public static synchronized NotificationManager getInstance() {
+    public static synchronized DirectLinkNotificationManager getInstance() {
         if (instance == null) {
-            instance = new NotificationManager();
+            instance = new DirectLinkNotificationManager();
         }
         return instance;
     }
 
-    private NotificationManager() {}
+    private DirectLinkNotificationManager() {}
 
     public void init(Context context) {
         this.context = context.getApplicationContext();
@@ -32,11 +32,11 @@ public class NotificationManager {
             NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
                 "DirectLink Messages",
-                android.app.NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_HIGH
             );
             channel.setDescription("Notifications for new DirectLink messages");
-            android.app.NotificationManager manager = 
-                (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationManager manager = 
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             if (manager != null) {
                 manager.createNotificationChannel(channel);
             }
@@ -53,18 +53,16 @@ public class NotificationManager {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true);
 
-        android.app.NotificationManager manager = 
-            (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager manager = 
+            (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {
             manager.notify(NOTIFICATION_ID, builder.build());
         }
     }
 
     public void onMessageReceived(String from, String content, String timestamp) {
-        // Show notification
         showNotification("New message from " + from, content);
         
-        // Update badge count in SharedPreferences
         SharedPreferences prefs = context.getSharedPreferences("DirectLinkPrefs", Context.MODE_PRIVATE);
         int currentBadge = prefs.getInt("badge_count", 0);
         prefs.edit().putInt("badge_count", currentBadge + 1).apply();

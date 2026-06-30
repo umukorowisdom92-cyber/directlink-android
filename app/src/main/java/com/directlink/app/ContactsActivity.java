@@ -9,8 +9,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,19 +29,20 @@ public class ContactsActivity extends BaseActivity {
         contactsRecyclerView = findViewById(R.id.contactsRecyclerView);
         emptyText = findViewById(R.id.emptyText);
 
-        contactsAdapter = new ChatAdapter(contactsList, new ChatAdapter.OnFriendRequestListener() {
-            @Override
-            public void onAccept(String requestId, String name, String phone) {}
-            @Override
-            public void onReject(String requestId, String name, String phone) {}
+        contactsAdapter = new ChatAdapter(contactsList, new ChatAdapter.OnItemClickListener() {
             @Override
             public void onChatClick(String name, String phone) {
                 Intent intent = new Intent(ContactsActivity.this, UserProfileActivity.class);
                 intent.putExtra("username", name);
                 intent.putExtra("phone", phone);
-                intent.putExtra("online", true);
                 startActivity(intent);
             }
+
+            @Override
+            public void onFriendRequestAccept(String requestId, String name, String phone) {}
+
+            @Override
+            public void onFriendRequestReject(String requestId) {}
         });
 
         contactsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -55,23 +54,21 @@ public class ContactsActivity extends BaseActivity {
     private void loadContacts() {
         new Thread(() -> {
             try {
-                String result = DirectLinkClient.getContacts();
-                JSONArray contacts = new JSONArray(result);
-
+                List<Contact> contacts = ConnectionManager.getInstance().getContacts();
+                
                 new Handler(Looper.getMainLooper()).post(() -> {
                     contactsList.clear();
-                    try {
-                        for (int i = 0; i < contacts.length(); i++) {
-                            JSONObject obj = contacts.getJSONObject(i);
-                            String username = obj.getString("username");
-                            String phone = obj.getString("phone_number");
-                            boolean online = obj.optBoolean("online", false);
-                            contactsList.add(new ChatItem(username, phone, "Contact", "Now", 0, online));
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    for (Contact contact : contacts) {
+                        contactsList.add(new ChatItem(
+                            contact.getUsername(),
+                            contact.getPhoneNumber(),
+                            "Contact",
+                            "Now",
+                            0,
+                            contact.isOnline()
+                        ));
                     }
-
+                    
                     if (contactsList.isEmpty()) {
                         emptyText.setVisibility(View.VISIBLE);
                         contactsRecyclerView.setVisibility(View.GONE);
@@ -83,7 +80,7 @@ public class ContactsActivity extends BaseActivity {
                 });
             } catch (Exception e) {
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    Toast.makeText(this, "Error loading contacts", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error loading contacts: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         }).start();
