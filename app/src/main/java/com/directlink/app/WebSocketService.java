@@ -60,7 +60,6 @@ public class WebSocketService extends Service {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
                 isConnected = true;
-                // Notify that we're online
                 sendOnlineStatus(true);
             }
 
@@ -90,9 +89,9 @@ public class WebSocketService extends Service {
                         // Show notification
                         showNotification(from, content);
 
-                        // Update NotificationManager
-                        NotificationManager.onMessageReceived(from, content, timestamp);
-                        NotificationManager.refreshChatList();
+                        // Use custom NotificationManager with full package name
+                        com.directlink.app.NotificationManager.onMessageReceived(from, content, timestamp);
+                        com.directlink.app.NotificationManager.refreshChatList();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
