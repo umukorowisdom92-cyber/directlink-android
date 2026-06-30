@@ -17,7 +17,6 @@ public class ConnectionManager {
     private static ConnectionManager instance;
     private static final String TAG = "DirectLink";
     
-    // Cloudflare Tunnel URL - Update this when URL changes
     public static final String SERVER_URL = "https://founder-sector-palestinian-date.trycloudflare.com";
     
     private String authToken = null;
@@ -126,6 +125,7 @@ public class ConnectionManager {
             Contact contact = new Contact(
                 obj.getString("username"),
                 obj.getString("phone_number"),
+                obj.optString("qr_id", ""),
                 obj.optBoolean("online", false)
             );
             contacts.add(contact);

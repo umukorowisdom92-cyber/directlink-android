@@ -70,10 +70,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
 
         new Thread(() -> {
             try {
-                // Load contacts from server
                 List<Contact> contacts = ConnectionManager.getInstance().getContacts();
-                
-                // Load friend requests
                 JSONArray requests = ConnectionManager.getInstance().getFriendRequests();
                 
                 new Handler(Looper.getMainLooper()).post(() -> {
@@ -82,7 +79,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
             } catch (Exception e) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     statusText.setText("❌ Error: " + e.getMessage());
-                    Toast.makeText(this, "Error loading data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Error loading data", Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
@@ -92,7 +89,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
         chatList.clear();
         totalUnreadCount = 0;
 
-        // Add friend requests first
+        // Friend requests
         try {
             for (int i = 0; i < requests.length(); i++) {
                 JSONObject req = requests.getJSONObject(i);
@@ -105,9 +102,8 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnItemClic
             e.printStackTrace();
         }
 
-        // Add contacts
+        // Contacts
         for (Contact contact : contacts) {
-            // For now, random unread count (server doesn't have messages yet)
             int unread = (int) (Math.random() * 3);
             if (unread > 0) {
                 totalUnreadCount += unread;
