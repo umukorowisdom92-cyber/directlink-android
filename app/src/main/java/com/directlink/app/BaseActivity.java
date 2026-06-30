@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class BaseActivity extends AppCompatActivity {
 
     protected LinearLayout navChats, navContacts, navCalls, navSettings;
+    protected TextView chatBadge;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,6 +22,7 @@ public class BaseActivity extends AppCompatActivity {
         navContacts = findViewById(R.id.navContacts);
         navCalls = findViewById(R.id.navCalls);
         navSettings = findViewById(R.id.navSettings);
+        chatBadge = findViewById(R.id.chatBadge);
 
         navChats.setOnClickListener(v -> {
             if (!(this instanceof MainActivity)) {

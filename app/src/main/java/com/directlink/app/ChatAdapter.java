@@ -11,17 +11,17 @@ import java.util.List;
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private List<ChatItem> chatList;
-    private OnFriendRequestListener requestListener;
+    private OnItemClickListener clickListener;
 
-    public interface OnFriendRequestListener {
-        void onAccept(String requestId, String name, String phone);
-        void onReject(String requestId, String name, String phone);
+    public interface OnItemClickListener {
         void onChatClick(String name, String phone);
+        void onFriendRequestAccept(String requestId, String name, String phone);
+        void onFriendRequestReject(String requestId);
     }
 
-    public ChatAdapter(List<ChatItem> chatList, OnFriendRequestListener listener) {
+    public ChatAdapter(List<ChatItem> chatList, OnItemClickListener listener) {
         this.chatList = chatList;
-        this.requestListener = listener;
+        this.clickListener = listener;
     }
 
     @Override
@@ -54,14 +54,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             frHolder.avatar.setBackgroundColor(chat.getAvatarColor());
 
             frHolder.acceptButton.setOnClickListener(v -> {
-                if (requestListener != null) {
-                    requestListener.onAccept(chat.getRequestId(), chat.getName(), chat.getPhone());
+                if (clickListener != null) {
+                    clickListener.onFriendRequestAccept(chat.getRequestId(), chat.getName(), chat.getPhone());
                 }
             });
 
             frHolder.rejectButton.setOnClickListener(v -> {
-                if (requestListener != null) {
-                    requestListener.onReject(chat.getRequestId(), chat.getName(), chat.getPhone());
+                if (clickListener != null) {
+                    clickListener.onFriendRequestReject(chat.getRequestId());
                 }
             });
         } else {
@@ -72,12 +72,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             chatHolder.avatar.setText(chat.getAvatarText());
             chatHolder.avatar.setBackgroundColor(chat.getAvatarColor());
 
+            // Online/Offline dot
             if (chat.isOnline()) {
                 chatHolder.onlineDot.setBackgroundResource(R.drawable.online_dot);
             } else {
                 chatHolder.onlineDot.setBackgroundResource(R.drawable.offline_dot);
             }
 
+            // Badge - Show unread count
             if (chat.getBadgeCount() > 0) {
                 chatHolder.badge.setVisibility(View.VISIBLE);
                 chatHolder.badge.setText(String.valueOf(chat.getBadgeCount()));
@@ -86,8 +88,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
 
             chatHolder.itemView.setOnClickListener(v -> {
-                if (requestListener != null) {
-                    requestListener.onChatClick(chat.getName(), chat.getPhone());
+                if (clickListener != null) {
+                    clickListener.onChatClick(chat.getName(), chat.getPhone());
                 }
             });
         }
@@ -96,6 +98,16 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public int getItemCount() {
         return chatList.size();
+    }
+
+    public void updateBadgeCount(int position, int count) {
+        if (position >= 0 && position < chatList.size()) {
+            ChatItem item = chatList.get(position);
+            if (item.getType() == ChatItem.TYPE_CHAT) {
+                item.setBadgeCount(count);
+                notifyItemChanged(position);
+            }
+        }
     }
 
     static class ChatViewHolder extends RecyclerView.ViewHolder {
