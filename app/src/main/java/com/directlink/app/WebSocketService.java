@@ -76,10 +76,9 @@ public class WebSocketService extends Service {
                         // Show notification
                         showNotification(from, content);
 
-                        // Update NotificationManager
-                        NotificationManager notificationManager = NotificationManager.getInstance();
-                        notificationManager.onMessageReceived(from, content, timestamp);
-                        notificationManager.refreshChatList();
+                        // Update NotificationManager using static methods
+                        NotificationManager.onMessageReceived(from, content, timestamp);
+                        NotificationManager.refreshChatList();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

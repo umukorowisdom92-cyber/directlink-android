@@ -8,7 +8,7 @@ public class NotificationManager {
     private Map<String, Integer> unreadCounts = new HashMap<>();
     private Map<String, String> lastMessages = new HashMap<>();
     private Map<String, String> lastTimestamps = new HashMap<>();
-    private MainActivity mainActivity;
+    private static MainActivity mainActivity;
     private int totalUnread = 0;
 
     private NotificationManager() {}
@@ -20,17 +20,18 @@ public class NotificationManager {
         return instance;
     }
 
-    public void setMainActivity(MainActivity activity) {
-        this.mainActivity = activity;
+    public static void setMainActivity(MainActivity activity) {
+        mainActivity = activity;
     }
 
-    public void onMessageReceived(String sender, String message, String timestamp) {
-        int currentCount = unreadCounts.getOrDefault(sender, 0);
-        unreadCounts.put(sender, currentCount + 1);
-        totalUnread++;
+    public static void onMessageReceived(String sender, String message, String timestamp) {
+        NotificationManager mgr = getInstance();
+        int currentCount = mgr.unreadCounts.getOrDefault(sender, 0);
+        mgr.unreadCounts.put(sender, currentCount + 1);
+        mgr.totalUnread++;
 
-        lastMessages.put(sender, message);
-        lastTimestamps.put(sender, timestamp);
+        mgr.lastMessages.put(sender, message);
+        mgr.lastTimestamps.put(sender, timestamp);
 
         if (mainActivity != null) {
             mainActivity.updateChatListOnNewMessage(sender, message, timestamp);
@@ -38,30 +39,35 @@ public class NotificationManager {
         }
     }
 
-    public void clearUnread(String chatPartner) {
-        if (chatPartner != null && unreadCounts.containsKey(chatPartner)) {
-            int removed = unreadCounts.remove(chatPartner);
-            totalUnread = Math.max(0, totalUnread - removed);
+    public static void clearUnread(String chatPartner) {
+        NotificationManager mgr = getInstance();
+        if (chatPartner != null && mgr.unreadCounts.containsKey(chatPartner)) {
+            int removed = mgr.unreadCounts.remove(chatPartner);
+            mgr.totalUnread = Math.max(0, mgr.totalUnread - removed);
         }
     }
 
-    public int getUnreadCount(String chatPartner) {
-        return unreadCounts.getOrDefault(chatPartner, 0);
+    public static int getUnreadCount(String chatPartner) {
+        NotificationManager mgr = getInstance();
+        return mgr.unreadCounts.getOrDefault(chatPartner, 0);
     }
 
-    public int getTotalUnread() {
-        return totalUnread;
+    public static int getTotalUnread() {
+        NotificationManager mgr = getInstance();
+        return mgr.totalUnread;
     }
 
-    public String getLastMessage(String chatPartner) {
-        return lastMessages.get(chatPartner);
+    public static String getLastMessage(String chatPartner) {
+        NotificationManager mgr = getInstance();
+        return mgr.lastMessages.get(chatPartner);
     }
 
-    public String getLastTimestamp(String chatPartner) {
-        return lastTimestamps.get(chatPartner);
+    public static String getLastTimestamp(String chatPartner) {
+        NotificationManager mgr = getInstance();
+        return mgr.lastTimestamps.get(chatPartner);
     }
 
-    public void refreshChatList() {
+    public static void refreshChatList() {
         if (mainActivity != null) {
             mainActivity.refreshChatList();
         }
