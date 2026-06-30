@@ -77,8 +77,8 @@ public class WebSocketService extends Service {
                         showNotification(from, content);
 
                         // Update NotificationManager using static methods
-                        NotificationManager.onMessageReceived(from, content, timestamp);
-                        NotificationManager.refreshChatList();
+                        com.directlink.app.NotificationManager.onMessageReceived(from, content, timestamp);
+                        com.directlink.app.NotificationManager.refreshChatList();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
