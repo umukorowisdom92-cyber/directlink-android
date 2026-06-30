@@ -28,7 +28,7 @@ public class WebSocketService extends Service {
         super.onCreate();
         SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
         currentUsername = prefs.getString("username", "");
-        serverUrl = prefs.getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
+        serverUrl = prefs.getString("server_url", "https://founder-sector-palestinian-date.trycloudflare.com");
         connectWebSocket();
     }
 
@@ -77,7 +77,9 @@ public class WebSocketService extends Service {
                         showNotification(from, content);
 
                         // Update NotificationManager
-                        NotificationManager.getInstance().onMessageReceived(from, content, timestamp);
+                        NotificationManager notificationManager = NotificationManager.getInstance();
+                        notificationManager.onMessageReceived(from, content, timestamp);
+                        notificationManager.refreshChatList();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -7,7 +7,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -35,6 +34,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     private FloatingActionButton fabAddUser;
     private String authToken;
     private String currentUsername;
+    private boolean isConnected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,9 +63,6 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         chatsRecyclerView.setAdapter(chatAdapter);
 
-        // Load messages from database
-        loadMessagesFromDatabase();
-
         fabAddUser.setOnClickListener(v -> showAddUserDialog());
 
         connectButton.setOnClickListener(v -> {
@@ -86,6 +83,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                 try {
                     DirectLinkClient.init(serverUrl);
                     DirectLinkClient.setAuthToken(authToken);
+                    isConnected = true;
                     loadData();
                     new Handler(Looper.getMainLooper()).post(() -> {
                         statusText.setText("✅ Connected to: " + serverUrl);
@@ -93,6 +91,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
                         connectButton.setEnabled(true);
                     });
                 } catch (Exception e) {
+                    isConnected = false;
                     new Handler(Looper.getMainLooper()).post(() -> {
                         statusText.setText("❌ Error: " + e.getMessage());
                         Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -125,11 +124,12 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         }
     }
 
-    private void loadMessagesFromDatabase() {
-        // Load messages from database and update chat list
-        // This will show recent chats with unread counts
-        MessageDatabase db = new MessageDatabase(this);
-        // You can implement this to load recent chats
+    public void refreshChatList() {
+        runOnUiThread(() -> {
+            if (isConnected) {
+                loadData();
+            }
+        });
     }
 
     public void updateChatListOnNewMessage(String sender, String message, String timestamp) {
@@ -227,7 +227,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
     }
 
     @Override
-    public void onReject(String requestId) {
+    public void onReject(String requestId, String name, String phone) {
         new Thread(() -> {
             try {
                 DirectLinkClient.setAuthToken(authToken);
@@ -286,7 +286,7 @@ public class MainActivity extends BaseActivity implements ChatAdapter.OnFriendRe
         new Thread(() -> {
             try {
                 SharedPreferences prefs = getSharedPreferences("DirectLinkPrefs", MODE_PRIVATE);
-                String serverUrl = prefs.getString("server_url", "https://construct-blend-instant-alfred.trycloudflare.com");
+                String serverUrl = prefs.getString("server_url", "https://founder-sector-palestinian-date.trycloudflare.com");
                 DirectLinkClient.init(serverUrl);
                 DirectLinkClient.setAuthToken(authToken);
 

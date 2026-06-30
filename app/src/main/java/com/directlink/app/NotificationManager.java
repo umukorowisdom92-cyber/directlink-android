@@ -28,46 +28,42 @@ public class NotificationManager {
         int currentCount = unreadCounts.getOrDefault(sender, 0);
         unreadCounts.put(sender, currentCount + 1);
         totalUnread++;
-        
+
         lastMessages.put(sender, message);
         lastTimestamps.put(sender, timestamp);
-        
+
         if (mainActivity != null) {
             mainActivity.updateChatListOnNewMessage(sender, message, timestamp);
             mainActivity.updateUnreadBadge();
         }
     }
 
-    public void clearUnread(String sender) {
-        int count = unreadCounts.getOrDefault(sender, 0);
-        totalUnread = Math.max(0, totalUnread - count);
-        unreadCounts.put(sender, 0);
-        if (mainActivity != null) {
-            mainActivity.refreshChatList();
-            mainActivity.updateUnreadBadge();
+    public void clearUnread(String chatPartner) {
+        if (chatPartner != null && unreadCounts.containsKey(chatPartner)) {
+            int removed = unreadCounts.remove(chatPartner);
+            totalUnread = Math.max(0, totalUnread - removed);
         }
     }
 
-    public int getUnreadCount(String sender) {
-        return unreadCounts.getOrDefault(sender, 0);
+    public int getUnreadCount(String chatPartner) {
+        return unreadCounts.getOrDefault(chatPartner, 0);
     }
 
-    public int getTotalUnreadCount() {
+    public int getTotalUnread() {
         return totalUnread;
     }
 
-    public String getLastMessage(String sender) {
-        return lastMessages.getOrDefault(sender, "Tap to chat");
+    public String getLastMessage(String chatPartner) {
+        return lastMessages.get(chatPartner);
     }
 
-    public String getLastTimestamp(String sender) {
-        return lastTimestamps.getOrDefault(sender, "Now");
+    public String getLastTimestamp(String chatPartner) {
+        return lastTimestamps.get(chatPartner);
     }
 
-    public void reset() {
-        unreadCounts.clear();
-        lastMessages.clear();
-        lastTimestamps.clear();
-        totalUnread = 0;
+    public void refreshChatList() {
+        if (mainActivity != null) {
+            mainActivity.refreshChatList();
+        }
     }
 }
